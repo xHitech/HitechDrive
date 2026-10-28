@@ -1,0 +1,39 @@
+# Python and editor artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Credentials, OAuth downloads, private instance data, logs and media
+.env
+.env.*
+!.env.example
+client*.json
+credentials*.json
+client_secret*.json
+tokens*.json
+instance.json
+config.json
+account.json
+manifest.json
+catalog.json
+errors.json
+*.pem
+*.key
+*.log
+*.part
+*.sqlite*
+*.db
+state/
+samples/
+backups/
+
+# Internal conversation/review handoff; contains local machine details
+docs/PLANO_DE_POLIMENTO.md

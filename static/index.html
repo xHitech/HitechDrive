@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FBFAFF">
+  <title>HitechDrive</title>
+  <script src="/theme.js"></script>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/ui.js" defer></script>
+  <script src="/diagnostics.js" defer></script>
+</head>
+<body>
+<svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.8 13a9 9 0 0 1-9.8-9.8A9 9 0 1 0 20.8 13Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m10.3 4-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 4v13m-5-5 5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 14h8m-8 3h5"/></symbol>
+</svg>
+<a class="skip-link" href="#main">Ir para o conteúdo</a>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="HitechDrive, visão geral"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>hitech<span class="brand-light">drive</span><small>SEU ACERVO, EM CASA.</small></span></a>
+    <div class="nav-caption">ESPAÇO DE TRABALHO</div>
+    <nav aria-label="Navegação principal">
+      <a class="nav-link active" href="#overview" data-nav="overview" aria-current="page"><svg class="icon"><use href="#i-grid"/></svg>Visão geral</a>
+      <a class="nav-link" href="#diagnostics" data-nav="diagnostics"><svg class="icon"><use href="#i-pulse"/></svg>Desempenho</a>
+      <a class="nav-link" href="#issues" data-nav="issues"><svg class="icon"><use href="#i-alert"/></svg>Pendências<span id="nav-error-count" class="nav-count" hidden>0</span></a>
+      <a class="nav-link" href="#activity" data-nav="activity"><svg class="icon"><use href="#i-clock"/></svg>Atividade</a>
+      <a class="nav-link" href="#settings" data-nav="settings"><svg class="icon"><use href="#i-settings"/></svg>Configurações</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="storage-icon"><svg class="icon"><use href="#i-folder"/></svg></div><strong>Armazenamento local</strong><span>/srv/media</span><p>Uma cópia do seu Drive.<br>No seu próprio espaço.</p><a class="sidebar-signature" href="https://github.com/xHitech" target="_blank" rel="noopener noreferrer" aria-label="Um projeto Hitech Studio — GitHub (abre em outra aba)">UM PROJETO HITECH STUDIO <span>↗</span></a></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>Workspace <span class="breadcrumb-slash">/</span> <strong id="breadcrumb">Visão geral</strong></span><div class="topbar-actions"><button id="theme-toggle" class="theme-toggle" type="button" aria-label="Ativar tema escuro" aria-pressed="false" title="Ativar tema escuro"><svg class="icon theme-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="icon theme-sun" aria-hidden="true"><use href="#i-sun"/></svg></button><span id="badge" class="connection-badge">Conectando ao serviço…</span></div></header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading"><div><span class="eyebrow">SEUS ARQUIVOS. SOB SEU CONTROLE.</span><h1 id="page-title">Tudo no seu lugar<span>.</span></h1><p id="page-description">Acompanhe sua cópia local, sem perder o ritmo.</p></div><span class="product-tag">HitechDrive <span>●</span></span></div>
+
+      <div data-page="overview" id="overview-page">
+        <div class="library-stats">
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-folder"/></svg></span><span>Tamanho do acervo</span><strong id="total-size">—</strong><small>Arquivos com tamanho conhecido</small></article>
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-arrow"/></svg></span><span>Recebido no disco</span><strong id="copied-size">—</strong><small>Incluindo downloads parciais</small></article>
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-file"/></svg></span><span>Falta baixar</span><strong id="remaining-size">—</strong><small>Dados ainda pendentes</small></article>
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-clock"/></svg></span><span>Tempo estimado</span><strong id="eta">—</strong><small>Varia conforme a velocidade</small></article>
+        </div>
+        <section class="card sync-card" aria-labelledby="phase">
+          <div class="card-heading"><div><span class="section-kicker"><span id="sync-dot" class="status-dot"></span>SINCRONIZAÇÃO</span><h2 id="phase">Preparando seu espaço</h2><p id="current">Consultando o serviço…</p></div><div class="controls"><button id="pause" class="button secondary"><svg class="icon"><use href="#i-pause"/></svg>Pausar</button><button id="start" class="button"><svg class="icon"><use href="#i-play"/></svg>Sincronizar agora</button></div></div>
+          <div class="progress-group global-progress"><div class="progress-heading"><strong>Acervo inteiro</strong><span id="global-total">Consultando total…</span></div><progress id="progress" aria-label="Progresso do acervo inteiro" max="100" value="0"></progress><div class="metrics"><span id="files">Aguardando catálogo</span><span id="last">Nenhum ciclo concluído</span></div></div>
+          <p id="error" class="inline-error" role="alert" hidden></p>
+          <small id="size-note" class="fine-print">O progresso aparece após consultar o catálogo.</small>
+        </section>
+        <div class="overview-columns">
+          <section class="card downloads-card" aria-labelledby="downloads-title"><div class="card-heading"><div><span class="section-kicker">TRANSFERÊNCIAS</span><h2 id="downloads-title">A caminho do seu disco</h2></div><span id="active-summary" class="soft-badge">Aguardando</span></div><div class="active-total"><span id="transfer">Nenhum download em andamento</span><progress id="active-progress" aria-label="Progresso somado dos downloads em andamento" max="100" value="0"></progress></div><ul id="active-transfers" class="transfer-list"></ul><div id="downloads-empty" class="empty-state"><svg class="icon"><use href="#i-arrow"/></svg><strong>Um momento de pausa.</strong><p>Os arquivos em transferência aparecem aqui, cada um com seu progresso.</p></div></section>
+          <aside class="card quick-settings"><span class="section-kicker">NO SEU RITMO</span><h2>Ajustes rápidos</h2><p>Mais velocidade ou mais espaço para o resto do dia.</p><label for="workers">Downloads simultâneos</label><select id="workers"><option value="1">1 arquivo por vez</option><option value="2">2 arquivos por vez</option><option value="3">3 arquivos por vez</option><option value="4">4 arquivos por vez</option><option value="5">5 arquivos por vez</option><option value="6">6 arquivos por vez</option><option value="7">7 arquivos por vez</option><option value="8">8 arquivos por vez</option></select><small id="workers-status">A alteração é aplicada automaticamente.</small><div class="settings-divider"></div><label for="bandwidth">Velocidade máxima <span>MiB/s</span></label><div class="input-action"><input id="bandwidth" type="number" min="0" max="10000" step="any" value="0"><button id="apply-bandwidth" class="button secondary">Aplicar</button></div><small id="bandwidth-status">0 = sem limite de velocidade.</small><div class="quick-note"><svg class="icon"><use href="#i-pulse"/></svg><span>Quer entender o que limita a velocidade? <a href="#diagnostics">Veja o desempenho ↗</a></span></div></aside>
+        </div>
+      </div>
+
+      <div data-page="diagnostics" id="diagnostics-page" hidden>
+        <section class="card" id="diagnostics"><div class="card-heading"><div><span class="section-kicker">ARMAZENAMENTO & CONEXÃO</span><h2>Por dentro da sincronização</h2></div><span class="soft-badge">Amostras ao vivo</span></div><p id="raid-health" class="health-strip">Consultando o RAID…</p><div class="diagnostic-charts"><div class="chart-card"><div class="chart-heading"><h3>Atividade dos discos</h3><span>Tempo ocupado · %</span></div><canvas id="disk-chart" role="img" aria-label="Histórico de ocupação percentual dos discos do RAID"></canvas><div id="disk-legend" class="chart-legend"></div></div><div class="chart-card"><div class="chart-heading"><h3>Fluxo de dados</h3><span>MiB/s</span></div><canvas id="network-chart" role="img" aria-label="Histórico da taxa de download do Google e tráfego da rede"></canvas><div class="chart-legend"><span class="legend-google">Google</span><span class="legend-rx">Rede recebida</span><span class="legend-tx">Rede enviada</span></div></div></div><div id="disk-metrics" class="disk-metrics"></div><p id="network-metrics" class="network-summary">Aguardando a segunda amostra…</p><ul id="diagnostic-warnings" class="diagnostic-warnings"></ul><details class="advanced"><summary>Tempos de processamento e interpretação dos dados</summary><div id="stage-metrics" class="stage-metrics"></div><p>O tempo observado é dividido entre resposta da API, leitura da conexão, gravação, checksum e limitador. Essas porcentagens não medem a capacidade do Google.</p><p>100% de ocupação significa que o disco teve I/O em andamento durante o intervalo. Filas e latências sustentadas ajudam a identificar um possível gargalo. Os números da placa incluem outros programas e tráfego local.</p><p>Até 120 amostras ficam disponíveis enquanto o painel está aberto.</p></details></section>
+        <section class="card internet-card"><div><h2>Uma referência para sua conexão</h2><p>Informe a velocidade contratada para comparar com o tráfego observado.</p></div><div class="internet-setting"><label for="internet-mbps">Seu plano em Mbps</label><div class="input-action"><input type="number" id="internet-mbps" min="0" max="1000000" step="any" value="0"><button id="save-internet" class="button secondary">Salvar</button></div><small>0 = desconhecido. É uma referência, não um teste de velocidade.</small></div></section>
+      </div>
+
+      <div data-page="issues" id="issues-page" hidden><section class="card"><div class="card-heading"><div><span class="section-kicker">ATENÇÃO AOS DETALHES</span><h2 id="errors-title">Nenhum erro registrado</h2></div><button class="button secondary" id="retry-errors" disabled>Tentar novamente</button></div><p id="errors-note">Se algum arquivo precisar de atenção, você encontra o motivo aqui.</p><ul id="file-errors" class="error-list"></ul><div id="issues-empty" class="empty-state"><svg class="icon"><use href="#i-grid"/></svg><strong>Nenhuma pendência registrada.</strong><p>Falhas de transferência ficam salvas aqui até serem resolvidas.</p></div></section></div>
+      <div data-page="activity" id="activity-page" hidden><section class="card"><div class="card-heading"><div><span class="section-kicker">PASSO A PASSO</span><h2>Atividade recente</h2></div><span class="soft-badge">Últimos 40 eventos</span></div><ul id="events" class="event-list"><li>Nenhuma atividade ainda.</li></ul></section></div>
+      <div data-page="settings" id="settings-page" hidden><div class="settings-columns"><section class="card"><span class="section-kicker">CONEXÃO</span><h2>Sua conta Google</h2><p id="connection">Aguardando configuração.</p><div class="actions"><label class="button secondary file-button" for="client">Importar JSON do Google<input id="client" class="file-input" type="file" accept="application/json,.json"></label><button id="connect" class="button">Conectar com Google</button></div><details id="google-setup" class="advanced"><summary>Configurar o acesso pela primeira vez</summary><ol><li>Abra o <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer">Google Cloud Console</a> e crie um projeto.</li><li>Ative a <strong>Google Drive API</strong> na biblioteca de APIs.</li><li>Configure o Google Auth Platform e adicione seu e-mail como usuário de teste.</li><li>Crie um cliente OAuth do tipo <strong>Aplicativo para computador</strong> e baixe o JSON.</li><li>Importe o arquivo acima e autorize sua conta.</li></ol><p>A autorização é somente para leitura. Em modo de teste, o Google pode expirar a sessão após sete dias. Veja o README para uso pessoal contínuo.</p></details></section><section class="card"><span class="section-kicker">SUA RÉPLICA</span><h2>Origem e destino</h2><label for="root">Pasta no Google Drive</label><input id="root" value="root" placeholder="root, ID ou link da pasta"><small>Use root para o Meu Drive inteiro.</small><label for="interval">Consultar alterações a cada</label><select id="interval"><option value="60">1 minuto</option><option value="300" selected>5 minutos</option><option value="900">15 minutos</option><option value="3600">1 hora</option></select><label>Destino no RAID</label><p id="destination" class="destination">/srv/media/GoogleDrive</p><button class="button secondary" id="save">Salvar configuração</button><small>Pause e aguarde as transferências pararem antes de editar. Após a primeira cópia, a origem fica fixa.</small></section></div><details class="card advanced storage-policy"><summary>Como seus arquivos são preservados</summary><p>O HitechDrive lê o Google Drive e mantém uma cópia local. Ele não envia alterações à nuvem.</p><p>Arquivos removidos ou substituídos ficam em <code>GoogleDrive/.drive-espelho/lixeira</code>. Essa lixeira ocupa espaço e não é apagada automaticamente.</p><p>Docs, Sheets e Slides são exportados; formatos nativos não suportados ficam como links. A seção “Compartilhados comigo” não é incluída automaticamente.</p></details></div>
+      <footer><span>Feito para manter o que é seu, perto de você.</span><span>Hitech Studio <span class="footer-dot">·</span> HitechDrive</span></footer>
+    </main>
+  </div>
+</div>
+<div id="toast" role="status" hidden></div>
+</body>
+</html>
