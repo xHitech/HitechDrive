@@ -14,5 +14,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m unittest -v
-      - run: node --check static/ui.js && node --check static/diagnostics.js && node --check static/theme.js && node --check static/maintenance.js
-      - run: bash -n iniciar.sh instalar-servico.sh
+      - run: node --check static/ui.js && node --check static/diagnostics.js && node --check static/theme.js && node --check static/maintenance.js && node --check tools/demo-fixture.js && node tools/verificar-demo.cjs
+      - run: bash -n iniciar.sh instalar-servico.sh tools/publicar-github.sh tools/lancar-github.sh

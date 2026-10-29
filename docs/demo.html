@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FBFAFF">
+  <title>HitechDrive · offline demo</title>
+  <script>'use strict';
+(() => {
+  const storageKey = 'hitechdrive-theme';
+  const preference = window.matchMedia('(prefers-color-scheme: dark)');
+  let stored = null;
+  try { stored = window.localStorage.getItem(storageKey); } catch {}
+  let explicit = stored === 'light' || stored === 'dark';
+  function apply(theme) {
+    document.documentElement.dataset.theme = theme;
+    const button = document.getElementById('theme-toggle');
+    if (button) {
+      const dark = theme === 'dark';
+      const label = dark ? 'Ativar tema claro' : 'Ativar tema escuro';
+      button.setAttribute('aria-pressed', String(dark));
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+    window.dispatchEvent(new CustomEvent('hitech:theme', {detail: theme}));
+  }
+  apply(explicit ? stored : preference.matches ? 'dark' : 'light');
+  document.addEventListener('DOMContentLoaded', () => {
+    apply(document.documentElement.dataset.theme);
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      explicit = true;
+      try { window.localStorage.setItem(storageKey, theme); } catch {}
+      apply(theme);
+    });
+  });
+  preference.addEventListener('change', event => { if (!explicit) apply(event.matches ? 'dark' : 'light'); });
+  window.addEventListener('storage', event => {
+    if (event.key !== storageKey) return;
+    explicit = event.newValue === 'light' || event.newValue === 'dark';
+    apply(explicit ? event.newValue : preference.matches ? 'dark' : 'light');
+  });
+})();
+</script>
+  <style>:root {
+  color-scheme: light;
+  --bg: #FBFAFF;
+  --card: #FFFFFF;
+  --soft: #F1EBFC;
+  --line: #E9E7EF;
+  --purple-line: #CDBAFA;
+  --text: #291D3B;
+  --muted: #766A83;
+  --accent: #6D28D9;
+  --hover: #5B21B6;
+  --radius: 18px;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--hover); }
+.icon-definitions { position: absolute; width: 0; height: 0; overflow: hidden; }
+.icon { width: 19px; height: 19px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+.skip-link { position: fixed; left: 20px; top: -80px; z-index: 100; background: var(--accent); color: white; padding: 12px; border-radius: 8px; }
+.skip-link:focus { top: 10px; }
+.app-shell { display: flex; min-height: 100vh; }
+.sidebar { position: fixed; width: 228px; inset: 0 auto 0 0; background: var(--card); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 35px 20px 22px; z-index: 5; }
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 8px; color: var(--text); font-size: 22px; font-weight: 750; letter-spacing: -1px; }
+.brand-light { font-weight: 430; }
+.brand small { display: block; font-size: 8px; letter-spacing: 1.5px; font-weight: 650; color: var(--muted); margin-top: 2px; }
+.brand-mark { display: flex; align-items: center; justify-content: center; gap: 3px; width: 34px; height: 38px; background: var(--accent); border-radius: 10px; transform: rotate(-8deg); }
+.brand-mark i { width: 4px; background: white; border-radius: 3px; height: 20px; }
+.brand-mark i:nth-child(2) { height: 13px; }
+.brand-mark i:nth-child(3) { height: 24px; }
+.nav-caption { font-size: 9px; letter-spacing: 1.7px; font-weight: 650; color: var(--muted); margin: 49px 13px 13px; }
+nav { display: grid; gap: 7px; }
+.nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; color: #7B728B; font-weight: 520; font-size: 13px; transition: background .15s, color .15s; }
+.nav-link:hover { background: var(--bg); }
+.nav-link.active { background: var(--soft); color: var(--accent); font-weight: 650; }
+.nav-count { margin-left: auto; min-width: 21px; border-radius: 6px; background: #FCEBEF; color: #A52D49; padding: 0 5px; font-size: 11px; text-align: center; }
+.sidebar-bottom { margin-top: auto; padding: 45px 12px 0; }
+.storage-icon { display: inline-flex; padding: 8px; border-radius: 10px; background: var(--soft); color: var(--accent); margin-bottom: 10px; }
+.sidebar-bottom strong, .sidebar-bottom>span { display: block; font-size: 11px; }
+.sidebar-bottom>span { color: var(--muted); font: 10px/1.8 ui-monospace, monospace; margin-top: 3px; }
+.sidebar-bottom p { font-size: 11px; color: var(--muted); line-height: 1.8; margin: 12px 0 24px; }
+.sidebar-signature { border-top: 1px solid var(--line); padding-top: 17px; font-size: 8px; letter-spacing: .9px; color: var(--muted); }
+.sidebar-signature span { float: right; font-size: 14px; }
+.workspace { margin-left: 228px; width: calc(100% - 228px); min-width: 0; }
+.topbar { height: 73px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 42px; background: #FFFFFFA8; color: var(--muted); font-size: 12px; gap: 12px; }
+.topbar strong { color: var(--text); font-weight: 550; }
+.breadcrumb-slash { margin: 0 12px; color: #C8C1D3; }
+.connection-badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 20px; font-size: 10px; white-space: nowrap; color: var(--muted); background: white; }
+.connection-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #B1A8BE; }
+.connection-badge[data-connected=true]::before { background: #36A981; }
+.connection-badge[data-offline=true]::before { background: #DA8A49; }
+main { max-width: 1560px; margin: 0 auto; padding: 35px 42px 22px; }
+.page-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 28px; }
+.eyebrow { font-size: 9px; font-weight: 650; letter-spacing: 1.8px; color: var(--muted); }
+h1 { font-size: clamp(28px, 2.7vw, 38px); line-height: 1.25; font-weight: 650; letter-spacing: -1.5px; margin: 9px 0 8px; }
+h1 span { color: var(--accent); }
+.page-heading p { margin: 0; font-size: 12px; color: var(--muted); }
+.product-tag { color: var(--muted); border: 1px solid var(--line); border-radius: 6px; font-size: 9px; padding: 5px 9px; }
+.product-tag span { font-size: 5px; vertical-align: middle; color: var(--accent); margin-left: 5px; }
+.library-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 15px; margin-bottom: 22px; }
+.stat-card { position: relative; padding: 18px 20px; border: 1px solid var(--line); background: var(--card); border-radius: 13px; min-width: 0; }
+.stat-card>span:not(.stat-icon) { display: block; font-size: 11px; color: var(--muted); }
+.stat-card strong { display: block; margin: 12px 0 3px; font-size: clamp(23px,2.2vw,32px); font-weight: 600; letter-spacing: -1px; font-variant-numeric: tabular-nums; line-height: 1.4; overflow-wrap: anywhere; }
+.stat-card small { color: var(--muted); font-size: 9px; }
+.stat-icon { position: absolute; top: 17px; right: 15px; color: #B29BDB; }
+.stat-icon .icon { width: 16px; height: 16px; }
+.card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); padding: 25px 27px; margin-bottom: 22px; min-width: 0; }
+.card-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.section-kicker { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 9px; font-weight: 650; letter-spacing: 1.5px; }
+h2 { font-size: 19px; font-weight: 600; letter-spacing: -.55px; margin: 7px 0 0; line-height: 1.4; }
+p { color: var(--muted); }
+.card-heading p { margin: 7px 0 0; font-size: 11px; }
+.status-dot { width: 6px; height: 6px; background: #A594BA; border-radius: 50%; }
+.status-dot[data-running=true] { background: #8B5CF6; box-shadow: 0 0 0 3px #EDE4FC; }
+.sync-card { background: linear-gradient(115deg,#FFFFFF 55%,#FAF7FF); }
+.controls, .actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--accent); background: var(--accent); color: white; border-radius: 8px; min-height: 38px; padding: 9px 14px; font-size: 11px; font-weight: 600; cursor: pointer; line-height: 1.5; transition: background .15s, border-color .15s; white-space: nowrap; }
+.button .icon { width: 14px; height: 14px; }
+.button:hover { background: var(--hover); border-color: var(--hover); color: white; }
+.button.secondary { background: var(--card); border-color: var(--line); color: #77678D; }
+.button.secondary:hover { background: var(--soft); color: var(--hover); border-color: var(--purple-line); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.progress-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; font-size: 11px; }
+.progress-heading strong { font-weight: 550; }
+.progress-heading span { color: var(--accent); font-size: 12px; font-weight: 550; font-variant-numeric: tabular-nums; }
+progress { display: block; appearance: none; width: 100%; border: 0; border-radius: 5px; height: 6px; background: var(--soft); overflow: hidden; color: var(--accent); }
+progress::-webkit-progress-bar { background: var(--soft); border-radius: 5px; }
+progress::-webkit-progress-value { background: var(--accent); border-radius: 5px; }
+progress::-moz-progress-bar { background: var(--accent); border-radius: 5px; }
+.global-progress progress { height: 8px; }
+.metrics { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 10px; margin-top: 11px; }
+.fine-print { display: block; margin-top: 16px; font-size: 9px; color: var(--muted); }
+.inline-error { font-size: 12px; color: #AA3154; background: #FFF1F5; border: 1px solid #F5D9E3; border-radius: 8px; padding: 12px; overflow-wrap: anywhere; margin: 16px 0 0; }
+.overview-columns { display: grid; grid-template-columns: minmax(0,1fr) 280px; align-items: start; gap: 22px; }
+.soft-badge { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 9px; color: var(--muted); white-space: nowrap; }
+.downloads-card .card-heading { margin-bottom: 18px; }
+.active-total { border: 1px solid var(--line); background: var(--bg); border-radius: 9px; padding: 11px 13px; margin-bottom: 8px; }
+.active-total>span { display: block; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 8px; }
+.active-total progress { height: 4px; }
+.transfer-list { list-style: none; margin: 0; padding: 0; }
+.transfer-row { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 11px; padding: 17px 0; border-bottom: 1px solid var(--line); }
+.transfer-row:last-child { border-bottom: 0; padding-bottom: 4px; }
+.file-symbol { width: 33px; height: 39px; display: grid; place-items: center; color: #A58CC8; background: var(--soft); border-radius: 7px; }
+.file-symbol .icon { width: 16px; }
+.transfer-content { min-width: 0; }
+.transfer-name { display: block; font-size: 11px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.transfer-path { display: block; font-size: 9px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.transfer-content progress { height: 3px; margin-top: 9px; }
+.transfer-meta { font-size: 9px; color: var(--muted); margin-top: 5px; font-variant-numeric: tabular-nums; }
+.transfer-side { align-self: start; text-align: right; padding-top: 1px; font-variant-numeric: tabular-nums; }
+.transfer-side strong { display: block; color: var(--accent); font-size: 12px; font-weight: 600; }
+.transfer-side small { display: block; font-size: 9px; color: var(--muted); margin-top: 4px; }
+.quick-settings { padding: 23px 21px; }
+.quick-settings h2 { font-size: 18px; }
+.quick-settings>p { font-size: 11px; margin: 9px 0 20px; }
+label { display: block; font-size: 11px; font-weight: 550; margin: 18px 0 8px; }
+label>span { float: right; font-size: 9px; font-weight: 400; color: var(--muted); }
+input, select { width: 100%; background: white; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px 11px; min-height: 38px; font-size: 11px; }
+input:hover,select:hover { border-color: var(--purple-line); }
+small { display: block; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.quick-settings small { font-size: 9px; color: var(--muted); margin-top: 7px; }
+.settings-divider { height: 1px; background: var(--line); margin: 20px 0; }
+.input-action { display: flex; gap: 7px; }
+.input-action input { flex: 1; min-width: 0; }
+.input-action .button { flex: 0 0 auto; }
+.quick-note { display: flex; gap: 9px; border-top: 1px solid var(--line); padding-top: 19px; margin-top: 22px; color: var(--muted); font-size: 10px; }
+.quick-note .icon { width: 15px; height: 15px; margin-top: 2px; }
+.quick-note a { display: block; font-weight: 550; margin-top: 5px; }
+.empty-state { padding: 42px 20px; text-align: center; color: #B8A8CE; }
+.empty-state>.icon { width: 28px; height: 28px; margin-bottom: 10px; }
+.empty-state strong { display: block; font-size: 12px; color: var(--muted); font-weight: 550; }
+.empty-state p { font-size: 11px; margin: 7px auto 0; max-width: 310px; color: var(--muted); }
+.health-strip { padding: 12px 15px; background: var(--soft); border-radius: 9px; font-size: 11px; color: var(--hover); margin-bottom: 24px; }
+.diagnostic-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.chart-card { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 17px 14px 10px; }
+.chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+h3 { font-size: 12px; font-weight: 550; margin: 0 0 16px; }
+.chart-heading span { font-size: 9px; color: var(--muted); margin-bottom: 16px; }
+canvas { display: block; width: 100%; height: 190px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; font-size: 9px; color: var(--muted); }
+.chart-legend span::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 5px; background: var(--accent); }
+.chart-legend .legend-rx::before { background: #059669; }
+.chart-legend .legend-tx::before { background: #D97706; }
+.disk-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin: 22px 0; }
+.disk-metrics article { border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.disk-metrics article>span { font: 11px ui-monospace,monospace; color: var(--muted); }
+.disk-metrics strong { display: block; margin: 7px 0; color: var(--accent); font-size: 18px; font-weight: 550; }
+.disk-metrics small { font-size: 9px; overflow-wrap: anywhere; margin-top: 4px; }
+.disk-metrics .busy { border-color: #EDCF98; background: #FFFCF5; }
+.disk-metrics .busy strong { color: #AE7B30; }
+.network-summary { font-size: 11px; line-height: 1.9; padding: 14px; border-radius: 9px; background: var(--bg); }
+.diagnostic-warnings { list-style: none; padding: 0; margin: 16px 0; }
+.diagnostic-warnings li { font-size: 11px; border-left: 2px solid var(--purple-line); padding: 6px 12px; color: var(--muted); }
+.advanced { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+.advanced summary { cursor: pointer; font-size: 11px; font-weight: 550; color: var(--muted); }
+.advanced p, .advanced li { color: var(--muted); font-size: 11px; line-height: 1.9; }
+.advanced ol { padding-left: 20px; }
+.stage-metrics { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 15px; margin: 22px 0; }
+.stage-metrics div { font-size: 10px; color: var(--muted); }
+.stage-metrics progress { height: 4px; margin-top: 8px; }
+.internet-card { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 35px; }
+.internet-card p { font-size: 11px; }
+.internet-setting label { margin-top: 0; }
+.internet-setting small { margin-top: 7px; font-size: 9px; }
+.settings-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+.settings-columns .card>p { font-size: 12px; margin: 13px 0 20px; }
+.settings-columns small { margin: 8px 0 18px; }
+.settings-columns .actions { align-items: stretch; }
+.file-button { position: relative; overflow: hidden; margin: 0; }
+.file-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.file-button:focus-within { outline: 3px solid var(--purple-line); outline-offset: 3px; }
+.destination { background: var(--bg); border: 1px dashed var(--purple-line); border-radius: 8px; padding: 12px; font: 11px ui-monospace,monospace; color: var(--muted); overflow-wrap: anywhere; }
+.storage-policy { margin-top: 0; }
+.error-list, .event-list { list-style: none; padding: 0; margin: 0; }
+.error-list li { padding: 18px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.error-list strong { display: block; font-size: 12px; font-weight: 550; }
+.error-list p { font-size: 11px; color: #AF5267; margin: 6px 0; }
+.error-list small { font-size: 10px; }
+.event-list li { display: flex; gap: 22px; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.event-list li:last-child { border-bottom: 0; }
+.event-list time { color: var(--muted); font: 10px/1.9 ui-monospace,monospace; flex: 0 0 auto; }
+footer { display: flex; justify-content: space-between; gap: 20px; font-size: 9px; color: var(--muted); padding: 15px 0 8px; }
+.footer-dot { color: #D2C5E0; margin: 0 7px; }
+#toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); max-width: min(560px,90vw); padding: 13px 19px; border-radius: 10px; color: white; background: var(--hover); box-shadow: 0 7px 30px #5B21B626; z-index: 20; font-size: 12px; }
+:focus-visible { outline: 3px solid var(--purple-line); outline-offset: 3px; }
+::selection { background: var(--purple-line); color: var(--text); }
+code { overflow-wrap: anywhere; }
+@media(min-width:1600px) { main { padding-top: 45px; } .overview-columns { grid-template-columns:minmax(0,1fr) 315px; } }
+@media(max-width:1180px) { .sidebar { width: 196px; padding-left: 13px; padding-right: 13px; } .workspace { margin-left: 196px; width: calc(100% - 196px); } main { padding: 29px 26px 20px; } .topbar { padding: 0 26px; } .overview-columns { grid-template-columns:minmax(0,1fr) 250px; gap: 16px; } .card { padding: 22px; } .stat-card { padding: 16px; } .stat-icon { display: none; } .library-stats { gap: 10px; } .card-heading { gap: 12px; } }
+@media(max-width:980px) { .overview-columns { grid-template-columns:1fr; } .quick-settings { display:block; } .controls { flex-shrink:0; } .sync-card .card-heading { align-items:flex-start; } .controls .button { font-size:10px; padding:8px 10px; } .settings-columns,.diagnostic-charts { grid-template-columns:1fr; } .disk-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:720px) { .app-shell { display:block; } .sidebar { position:static; width:100%; padding:17px 18px 10px; border-right:0; border-bottom:1px solid var(--line); } .brand { font-size:20px; } .brand-mark { width:29px;height:32px; } .brand small,.nav-caption,.sidebar-bottom { display:none; } nav { display:flex; margin-top:20px; gap:5px; overflow-x:auto; } .nav-link { font-size:10px; padding:9px 10px; gap:6px; white-space:nowrap; } .nav-link .icon { width:14px;height:14px; } .workspace { margin-left:0;width:100%; } .topbar { height:49px;padding:0 20px;font-size:10px; } .connection-badge { font-size:9px; } main { padding:27px 18px 15px; } .page-heading { margin-bottom:22px; } .product-tag { display:none; } h1 { font-size:30px; } .library-stats { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; } .stat-card { padding:15px; } .stat-card strong { font-size:26px; } .card { padding:20px 18px;border-radius:13px; } .sync-card .card-heading { flex-direction:column;gap:16px; } .controls { width:100%; } .controls .button { flex:1;min-height:40px; } .progress-heading span { font-size:10px; } .metrics { font-size:9px; } .internet-card { grid-template-columns:1fr;gap:14px; } .stage-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .transfer-row { grid-template-columns:28px minmax(0,1fr) auto;gap:8px; } .file-symbol { width:27px;height:34px; } .transfer-side strong { font-size:10px; } .transfer-name { font-size:10px; } .card-heading h2 { font-size:18px; } .soft-badge { font-size:8px; } footer { flex-direction:column;gap:4px; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important;scroll-behavior:auto !important; } }
+
+/* Readable secondary text and comfortable controls on everyday laptop screens. */
+.button{font-size:12px;min-height:40px}label,input,select{font-size:12px}.stat-card small{font-size:10px}.transfer-name{font-size:12px}.transfer-path,.transfer-meta,.transfer-side small{font-size:10px}.fine-print{font-size:10px}.quick-settings small{font-size:10px}.quick-settings>p{font-size:12px}.file-button:has(input:disabled){opacity:.45;cursor:not-allowed}
+
+/* Theme tokens also feed the canvas charts. */
+:root { --chart-grid:#E9E7EF; --chart-text:#766A83; }
+.topbar-actions { display:flex; align-items:center; gap:12px; }
+.theme-toggle { display:grid; place-items:center; width:35px; height:35px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--accent); cursor:pointer; }
+.theme-toggle:hover { background:var(--soft); border-color:var(--purple-line); }
+.theme-toggle .icon { width:17px; height:17px; }
+.theme-sun { display:none; }
+.sidebar-signature { display:block; }
+:root[data-theme=dark] {
+  color-scheme:dark;
+  --bg:#100E16;
+  --card:#191620;
+  --soft:#292035;
+  --line:#332C40;
+  --purple-line:#584273;
+  --text:#F1EAF9;
+  --muted:#B6A7C8;
+  --accent:#B996FF;
+  --hover:#CEB4FF;
+  --chart-grid:#332C40;
+  --chart-text:#B6A7C8;
+}
+[data-theme=dark] .theme-moon { display:none; }
+[data-theme=dark] .theme-sun { display:block; }
+[data-theme=dark] .topbar { background:#17131DD9; }
+[data-theme=dark] .sync-card { background:linear-gradient(115deg,#191620 55%,#21182E); }
+[data-theme=dark] input,[data-theme=dark] select,[data-theme=dark] .connection-badge { background:var(--card); }
+[data-theme=dark] .brand-mark { background:#7C3AED; }
+[data-theme=dark] .button:not(.secondary) { color:#171021; }
+[data-theme=dark] .button.secondary { color:var(--muted); }
+[data-theme=dark] .status-dot[data-running=true] { background:#B996FF; box-shadow:0 0 0 3px #39264E; }
+[data-theme=dark] .nav-link { color:var(--muted); }
+[data-theme=dark] .nav-link.active { color:var(--accent); }
+[data-theme=dark] .nav-count,[data-theme=dark] .inline-error { background:#38202F; color:#F5A4C2; border-color:#61354A; }
+[data-theme=dark] .disk-metrics .busy { background:#30281C; border-color:#735B30; }
+[data-theme=dark] .disk-metrics .busy strong { color:#F2CA82; }
+[data-theme=dark] .error-list p { color:#F5A4C2; }
+[data-theme=dark] .empty-state { color:var(--purple-line); }
+[data-theme=dark] #toast { background:#B996FF; color:#171021; }
+
+.system-alerts{border:1px solid var(--purple-line);background:var(--soft);border-radius:12px;padding:12px 18px;margin:0 0 20px}.system-alerts p{font-size:12px;margin:5px 0;color:var(--text)}.system-alerts a{font-weight:600;margin-left:8px}.maintenance-controls{display:grid;grid-template-columns:minmax(180px,250px) 1fr;gap:24px;align-items:center}.maintenance-controls input{max-width:200px}#maintenance-page .card>p{font-size:12px;line-height:1.8}#maintenance-page .actions{margin:18px 0}#maintenance-page small{margin-top:10px}.cleanup-list{list-style:none;padding:0;max-height:260px;overflow:auto;font-size:11px;color:var(--muted)}.cleanup-list li{padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.cleanup-confirm{max-width:560px}.cleanup-confirm .button{margin-top:18px}.button.danger{background:#A72D49;border-color:#A72D49;color:#FFFFFF}.button.danger:hover{background:#8B203B;border-color:#8B203B}[data-theme=dark] .button.danger{background:#E5789A;color:#21121B}#maintenance-progress{margin-top:12px}@media(max-width:720px){.maintenance-controls{grid-template-columns:1fr;gap:10px}}
+</style>
+
+
+
+</head>
+<body><div style="padding:10px;text-align:center;background:#5B21B6;color:white;font:14px system-ui;position:relative;z-index:20">OFFLINE DEMO · Dados fictícios / Sample data · Não conecta contas nem acessa arquivos reais.</div>
+<svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.8 13a9 9 0 0 1-9.8-9.8A9 9 0 1 0 20.8 13Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m10.3 4-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 4v13m-5-5 5 5 5-5M4 20h16"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6M8 14h8m-8 3h5"/></symbol>
+</svg>
+<a class="skip-link" href="#main">Ir para o conteúdo</a>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="HitechDrive, visão geral"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>hitech<span class="brand-light">drive</span><small>SEU ACERVO, EM CASA.</small></span></a>
+    <div class="nav-caption">ESPAÇO DE TRABALHO</div>
+    <nav aria-label="Navegação principal">
+      <a class="nav-link active" href="#overview" data-nav="overview" aria-current="page"><svg class="icon"><use href="#i-grid"/></svg>Visão geral</a>
+      <a class="nav-link" href="#diagnostics" data-nav="diagnostics"><svg class="icon"><use href="#i-pulse"/></svg>Desempenho</a>
+      <a class="nav-link" href="#issues" data-nav="issues"><svg class="icon"><use href="#i-alert"/></svg>Pendências<span id="nav-error-count" class="nav-count" hidden>0</span></a>
+      <a class="nav-link" href="#activity" data-nav="activity"><svg class="icon"><use href="#i-clock"/></svg>Atividade</a>
+      <a class="nav-link" href="#maintenance" data-nav="maintenance"><svg class="icon"><use href="#i-folder"/></svg>Manutenção</a>
+      <a class="nav-link" href="#settings" data-nav="settings"><svg class="icon"><use href="#i-settings"/></svg>Configurações</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="storage-icon"><svg class="icon"><use href="#i-folder"/></svg></div><strong>Armazenamento local</strong><span>/srv/media</span><p>Uma cópia do seu Drive.<br>No seu próprio espaço.</p><a class="sidebar-signature" href="https://github.com/xHitech" target="_blank" rel="noopener noreferrer" aria-label="Um projeto Hitech Studio — GitHub (abre em outra aba)">UM PROJETO HITECH STUDIO <span>↗</span></a></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>Workspace <span class="breadcrumb-slash">/</span> <strong id="breadcrumb">Visão geral</strong></span><div class="topbar-actions"><button id="theme-toggle" class="theme-toggle" type="button" aria-label="Ativar tema escuro" aria-pressed="false" title="Ativar tema escuro"><svg class="icon theme-moon" aria-hidden="true"><use href="#i-moon"/></svg><svg class="icon theme-sun" aria-hidden="true"><use href="#i-sun"/></svg></button><span id="badge" class="connection-badge">Conectando ao serviço…</span></div></header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading"><div><span class="eyebrow">SEUS ARQUIVOS. SOB SEU CONTROLE.</span><h1 id="page-title">Tudo no seu lugar<span>.</span></h1><p id="page-description">Acompanhe sua cópia local, sem perder o ritmo.</p></div><span class="product-tag">HitechDrive <span>●</span></span></div>
+
+      <section id="system-alerts" class="system-alerts" aria-live="polite" hidden></section>
+      <div data-page="overview" id="overview-page">
+        <div class="library-stats">
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-folder"/></svg></span><span>Tamanho do acervo</span><strong id="total-size">—</strong><small>Arquivos com tamanho conhecido</small></article>
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-arrow"/></svg></span><span>Recebido no disco</span><strong id="copied-size">—</strong><small>Incluindo downloads parciais</small></article>
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-file"/></svg></span><span>Falta baixar</span><strong id="remaining-size">—</strong><small>Dados ainda pendentes</small></article>
+          <article class="stat-card"><span class="stat-icon"><svg class="icon"><use href="#i-clock"/></svg></span><span>Tempo estimado</span><strong id="eta">—</strong><small>Varia conforme a velocidade</small></article>
+        </div>
+        <section class="card sync-card" aria-labelledby="phase">
+          <div class="card-heading"><div><span class="section-kicker"><span id="sync-dot" class="status-dot"></span>SINCRONIZAÇÃO</span><h2 id="phase">Preparando seu espaço</h2><p id="current">Consultando o serviço…</p></div><div class="controls"><button id="pause" class="button secondary"><svg class="icon"><use href="#i-pause"/></svg>Pausar</button><button id="start" class="button"><svg class="icon"><use href="#i-play"/></svg>Sincronizar agora</button></div></div>
+          <div class="progress-group global-progress"><div class="progress-heading"><strong>Acervo inteiro</strong><span id="global-total">Consultando total…</span></div><progress id="progress" aria-label="Progresso do acervo inteiro" max="100" value="0"></progress><div class="metrics"><span id="files">Aguardando catálogo</span><span id="last">Nenhum ciclo concluído</span></div></div>
+          <p id="error" class="inline-error" role="alert" hidden></p>
+          <small id="size-note" class="fine-print">O progresso aparece após consultar o catálogo.</small>
+        </section>
+        <div class="overview-columns">
+          <section class="card downloads-card" aria-labelledby="downloads-title"><div class="card-heading"><div><span class="section-kicker">TRANSFERÊNCIAS</span><h2 id="downloads-title">A caminho do seu disco</h2></div><span id="active-summary" class="soft-badge">Aguardando</span></div><div class="active-total"><span id="transfer">Nenhum download em andamento</span><progress id="active-progress" aria-label="Progresso somado dos downloads em andamento" max="100" value="0"></progress></div><ul id="active-transfers" class="transfer-list"></ul><div id="downloads-empty" class="empty-state"><svg class="icon"><use href="#i-arrow"/></svg><strong>Um momento de pausa.</strong><p>Os arquivos em transferência aparecem aqui, cada um com seu progresso.</p></div></section>
+          <aside class="card quick-settings"><span class="section-kicker">NO SEU RITMO</span><h2>Ajustes rápidos</h2><p>Mais velocidade ou mais espaço para o resto do dia.</p><label for="workers">Downloads simultâneos</label><select id="workers"><option value="1">1 arquivo por vez</option><option value="2">2 arquivos por vez</option><option value="3">3 arquivos por vez</option><option value="4">4 arquivos por vez</option><option value="5">5 arquivos por vez</option><option value="6">6 arquivos por vez</option><option value="7">7 arquivos por vez</option><option value="8">8 arquivos por vez</option></select><small id="workers-status">A alteração é aplicada automaticamente.</small><div class="settings-divider"></div><label for="bandwidth">Velocidade máxima <span>MiB/s</span></label><div class="input-action"><input id="bandwidth" type="number" min="0" max="10000" step="any" value="0"><button id="apply-bandwidth" class="button secondary">Aplicar</button></div><small id="bandwidth-status">0 = sem limite de velocidade.</small><div class="quick-note"><svg class="icon"><use href="#i-pulse"/></svg><span>Quer entender o que limita a velocidade? <a href="#diagnostics">Veja o desempenho ↗</a></span></div></aside>
+        </div>
+      </div>
+
+      <div data-page="diagnostics" id="diagnostics-page" hidden>
+        <section class="card" id="diagnostics"><div class="card-heading"><div><span class="section-kicker">ARMAZENAMENTO & CONEXÃO</span><h2>Por dentro da sincronização</h2></div><span class="soft-badge">Amostras ao vivo</span></div><p id="raid-health" class="health-strip">Consultando o RAID…</p><div class="diagnostic-charts"><div class="chart-card"><div class="chart-heading"><h3>Atividade dos discos</h3><span>Tempo ocupado · %</span></div><canvas id="disk-chart" role="img" aria-label="Histórico de ocupação percentual dos discos do RAID"></canvas><div id="disk-legend" class="chart-legend"></div></div><div class="chart-card"><div class="chart-heading"><h3>Fluxo de dados</h3><span>MiB/s</span></div><canvas id="network-chart" role="img" aria-label="Histórico da taxa de download do Google e tráfego da rede"></canvas><div class="chart-legend"><span class="legend-google">Google</span><span class="legend-rx">Rede recebida</span><span class="legend-tx">Rede enviada</span></div></div></div><div id="disk-metrics" class="disk-metrics"></div><p id="network-metrics" class="network-summary">Aguardando a segunda amostra…</p><ul id="diagnostic-warnings" class="diagnostic-warnings"></ul><details class="advanced"><summary>Tempos de processamento e interpretação dos dados</summary><div id="stage-metrics" class="stage-metrics"></div><p>O tempo observado é dividido entre resposta da API, leitura da conexão, gravação, checksum e limitador. Essas porcentagens não medem a capacidade do Google.</p><p>100% de ocupação significa que o disco teve I/O em andamento durante o intervalo. Filas e latências sustentadas ajudam a identificar um possível gargalo. Os números da placa incluem outros programas e tráfego local.</p><p>Até 120 amostras ficam disponíveis enquanto o painel está aberto.</p></details></section>
+        <section class="card internet-card"><div><h2>Uma referência para sua conexão</h2><p>Informe a velocidade contratada para comparar com o tráfego observado.</p></div><div class="internet-setting"><label for="internet-mbps">Seu plano em Mbps</label><div class="input-action"><input type="number" id="internet-mbps" min="0" max="1000000" step="any" value="0"><button id="save-internet" class="button secondary">Salvar</button></div><small>0 = desconhecido. É uma referência, não um teste de velocidade.</small></div></section>
+      </div>
+
+      <div data-page="issues" id="issues-page" hidden><section class="card"><div class="card-heading"><div><span class="section-kicker">ATENÇÃO AOS DETALHES</span><h2 id="errors-title">Nenhum erro registrado</h2></div><button class="button secondary" id="retry-errors" disabled>Tentar novamente</button></div><p id="errors-note">Se algum arquivo precisar de atenção, você encontra o motivo aqui.</p><ul id="file-errors" class="error-list"></ul><div id="issues-empty" class="empty-state"><svg class="icon"><use href="#i-grid"/></svg><strong>Nenhuma pendência registrada.</strong><p>Falhas de transferência ficam salvas aqui até serem resolvidas.</p></div></section></div>
+      <div data-page="activity" id="activity-page" hidden><section class="card"><div class="card-heading"><div><span class="section-kicker">PASSO A PASSO</span><h2>Atividade recente</h2></div><span class="soft-badge">Últimos 40 eventos</span></div><ul id="events" class="event-list"><li>Nenhuma atividade ainda.</li></ul></section></div>
+      <div data-page="settings" id="settings-page" hidden><div class="settings-columns"><section class="card"><span class="section-kicker">CONEXÃO</span><h2>Sua conta Google</h2><p id="connection">Aguardando configuração.</p><div class="actions"><label class="button secondary file-button" for="client">Importar JSON do Google<input id="client" class="file-input" type="file" accept="application/json,.json"></label><button id="connect" class="button">Conectar com Google</button></div><details id="google-setup" class="advanced"><summary>Configurar o acesso pela primeira vez</summary><ol><li>Abra o <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer">Google Cloud Console</a> e crie um projeto.</li><li>Ative a <strong>Google Drive API</strong> na biblioteca de APIs.</li><li>Configure o Google Auth Platform e adicione seu e-mail como usuário de teste.</li><li>Crie um cliente OAuth do tipo <strong>Aplicativo para computador</strong> e baixe o JSON.</li><li>Importe o arquivo acima e autorize sua conta.</li></ol><p>A autorização é somente para leitura. Em modo de teste, o Google pode expirar a sessão após sete dias. Veja o README para uso pessoal contínuo.</p></details></section><section class="card"><span class="section-kicker">SUA RÉPLICA</span><h2>Origem e destino</h2><label for="root">Pasta no Google Drive</label><input id="root" value="root" placeholder="root, ID ou link da pasta"><small>Use root para o Meu Drive inteiro.</small><label for="interval">Consultar alterações a cada</label><select id="interval"><option value="60">1 minuto</option><option value="300" selected>5 minutos</option><option value="900">15 minutos</option><option value="3600">1 hora</option></select><label>Destino no RAID</label><p id="destination" class="destination">/srv/media/GoogleDrive</p><button class="button secondary" id="save">Salvar configuração</button><small>Pause e aguarde as transferências pararem antes de editar. Após a primeira cópia, a origem fica fixa.</small></section></div><details class="card advanced storage-policy"><summary>Como seus arquivos são preservados</summary><p>O HitechDrive lê o Google Drive e mantém uma cópia local. Ele não envia alterações à nuvem.</p><p>Arquivos removidos ou substituídos ficam em <code>GoogleDrive/.drive-espelho/lixeira</code>. Essa lixeira ocupa espaço e não é apagada automaticamente.</p><p>Docs, Sheets e Slides são exportados; formatos nativos não suportados ficam como links. A seção “Compartilhados comigo” não é incluída automaticamente.</p></details></div>
+      <div data-page="maintenance" id="maintenance-page" hidden>
+        <p id="maintenance-compatibility" class="inline-error" hidden>Reinicie o serviço no servidor para carregar esta atualização.</p>
+        <section class="card"><span class="section-kicker">PRESERVE SUA RÉPLICA</span><h2>Recuperação depois de reinstalar</h2><p>Exporte o manifesto e a configuração para reconhecer os arquivos existentes. O backup contém caminhos e identificadores privados, mas não inclui tokens ou credenciais OAuth. Guarde em um lugar seguro.</p><div class="actions"><button class="button" id="recovery-export">Baixar backup de recuperação</button><label class="button secondary file-button" for="recovery-file">Importar backup<input id="recovery-file" class="file-input" type="file" accept="application/json,.json"></label><button class="button secondary" id="recovery-checkpoint">Restaurar checkpoint do volume</button></div><small id="checkpoint-note">Após um ciclo concluído, um checkpoint privado é salvo no próprio volume. Importação exige um manifesto vazio e o mesmo UUID de volume; não sobrescreve a réplica atual.</small></section>
+        <section class="card"><span class="section-kicker">CONFIRA COM CALMA</span><h2>Integridade e reconhecimento de arquivos</h2><p>A auditoria lê o conteúdo dos arquivos e compara com os hashes registrados. A reconstrução consulta o Drive e adota os arquivos locais que conferem com o checksum remoto, sem baixar novamente. Documentos sem hash remoto não são adotados automaticamente.</p><div class="maintenance-controls"><div><label for="maintenance-rate">Limite de leitura do disco (MiB/s)</label><input id="maintenance-rate" type="number" min="0" max="10000" step="any" value="8"><small>8 MiB/s por padrão. Ler um acervo grande pode levar muitas horas; 0 = sem limite.</small></div><div class="actions"><button class="button secondary" id="audit-start">Auditar integridade</button><button class="button secondary" id="rebuild-start">Reconhecer arquivos existentes</button><button class="button secondary" id="maintenance-cancel" disabled>Cancelar verificação</button></div></div><p id="maintenance-task" role="status">Pause a sincronização antes de iniciar uma manutenção.</p><progress id="maintenance-progress" max="100" value="0" aria-label="Progresso da manutenção"></progress><p id="maintenance-report"></p><ul id="maintenance-findings" class="error-list"></ul></section>
+        <section class="card"><span class="section-kicker">ESPAÇO DO SEU VOLUME</span><h2>Lixeira e downloads parciais</h2><p>Nenhuma limpeza acontece sozinha. Calcule o espaço, revise a prévia e escolha o que remover. Apagar parciais elimina a possibilidade de retomar aqueles downloads.</p><button class="button secondary" id="cleanup-preview">Calcular espaço e revisar arquivos</button><p id="cleanup-summary">Nenhuma prévia calculada.</p><ul id="cleanup-files" class="cleanup-list"></ul><div class="cleanup-confirm"><label for="cleanup-kind">O que deseja excluir?</label><select id="cleanup-kind"><option value="trash">Somente lixeira</option><option value="partials">Somente parciais</option><option value="all">Lixeira e parciais</option></select><label for="cleanup-confirmation">Para excluir definitivamente, digite APAGAR DEFINITIVAMENTE</label><input id="cleanup-confirmation" autocomplete="off" placeholder="APAGAR DEFINITIVAMENTE"><button class="button danger" id="cleanup-delete" disabled>Excluir os arquivos revisados</button><small>A prévia vale por dez minutos. Arquivos alterados depois da revisão serão preservados.</small></div></section>
+      </div>
+      <footer><span>Feito para manter o que é seu, perto de você.</span><span>Hitech Studio <span class="footer-dot">·</span> HitechDrive</span></footer>
+    </main>
+  </div>
+</div>
+<div id="toast" role="status" hidden></div>
+<script>// Runs only in the generated offline demo, never in the real service.
+const demoMiB=1048576,demoGiB=1073741824;
+let demoTick=0;
+const demoState={csrf:'offline-demo',phase:'baixando',connected:true,credentials:true,paused:false,
+ total:2400,done:1680,last_sync:null,error:'',root:'root',interval:300,workers:3,workers_live:true,
+ bandwidth_mib:0,destination:'/mnt/media/GoogleDrive',progress_ready:true,total_bytes:240*demoGiB,
+ copied_bytes:168*demoGiB,remaining_bytes:72*demoGiB,unknown_size_files:0,eta_seconds:1800,
+ speed:42*demoMiB,overall_speed:42*demoMiB,errors:[],error_count:0,tracked:1680,alerts:[],
+ events:[{time:'12:00:00',text:'Demonstração com arquivos fictícios.'}],maintenance_supported:true,
+ maintenance:{state:'idle',checkpoint_available:true},active:[]};
+function demoStatus(){
+ if(!demoState.paused){demoTick=(demoTick+1)%30;}
+ demoState.phase=demoState.paused?'pausado':'baixando';
+ demoState.active=demoState.paused?[]:[
+  {name:'Sample library/Animation/Short film.mp4',size:2*demoGiB,bytes:(.2+demoTick/45)*2*demoGiB,speed:18*demoMiB},
+  {name:'Sample library/Music/Instrumental.flac',size:160*demoMiB,bytes:(.15+demoTick/45)*160*demoMiB,speed:10*demoMiB},
+  {name:'Sample library/Books/Illustrated book.cbz',size:800*demoMiB,bytes:(.1+demoTick/45)*800*demoMiB,speed:14*demoMiB}];
+ return structuredClone(demoState);
+}
+function demoDiagnostics(){
+ const history=Array.from({length:40},(_,i)=>({time:i*2.5,google_bps:(37+Math.sin(i/4)*5)*demoMiB,
+  rx_bps:(39+Math.sin(i/4)*5)*demoMiB,networks:[{tx_bps:demoMiB}],
+  disks:['disk-a','disk-b','disk-c','disk-d'].map((name,j)=>({name,model:'Sample disk',
+   metrics:{busy_pct:35+j*8+Math.sin(i/4+j)*12,read_bps:0,write_bps:21*demoMiB,await_ms:12+j*3,queue:.5+j*.2}}))}));
+ const current=history.at(-1);Object.assign(current,{internet_pct:34,io_pressure_pct:2,
+  stages_pct:{api:4,receive:66,write:20,verify:7,throttle:3},
+  networks:[{name:'ethernet-demo',rx_bps:42*demoMiB,tx_bps:demoMiB,link_mbps:1000,link_rx_pct:35}]});
+ return {current,history,internet_mbps:1000,warnings:[],arrays:[{name:'demo-array',level:'raid10',members:['disk-a','disk-b','disk-c','disk-d'],degraded:0,sync_action:'idle'}]};
+}
+window.fetch=async function(input,options={}){
+ const path=String(input),method=options.method||'GET';
+ const respond=(data,status=200)=>({ok:status<400,status,json:async()=>data});
+ if(method==='GET'&&path==='/api/status')return respond(demoStatus());
+ if(method==='GET'&&path==='/api/diagnostics')return respond(demoDiagnostics());
+ const body=JSON.parse(options.body||'{}');
+ if(method==='POST'&&path==='/api/pause'){demoState.paused=true;return respond({ok:true});}
+ if(method==='POST'&&path==='/api/start'){demoState.paused=false;return respond({ok:true});}
+ if(method==='POST'&&path==='/api/workers'){demoState.workers=body.workers;return respond({ok:true});}
+ if(method==='POST'&&path==='/api/bandwidth'){demoState.bandwidth_mib=body.bandwidth_mib;return respond({ok:true});}
+ return respond({error:'Offline demo: esta ação está desativada. Nenhum dado real será lido ou alterado.'},400);
+};
+
+'use strict';
+
+let csrf = '';
+let initialized = false;
+let latest = null;
+let refreshBusy = false;
+let savingWorkers = false;
+let toastTimer;
+let errorsKey = '';
+let eventsKey = '';
+const busyActions = new Set();
+const transferNodes = new Map();
+const $ = id => document.getElementById(id);
+const phases = {
+  pausado: 'Sincronização pausada',
+  aguardando: 'Tudo no seu ritmo',
+  verificando: 'Consultando seu acervo',
+  baixando: 'Copiando para o RAID',
+  erro: 'Algo precisa de atenção'
+};
+const pages = {
+  overview: ['Visão geral', 'Tudo no seu lugar.', 'Acompanhe sua cópia local, sem perder o ritmo.'],
+  diagnostics: ['Desempenho', 'Cada detalhe, à vista.', 'Discos, conexão e transferências. Sem adivinhação.'],
+  issues: ['Pendências', 'Nada fica para trás.', 'Veja o que precisa de atenção e retome quando quiser.'],
+  activity: ['Atividade', 'Seu acervo em movimento.', 'Os últimos passos da sua sincronização.'],
+  maintenance: ['Manutenção', 'Seu acervo, protegido.', 'Recupere, confira e revise o espaço com controle.'],
+  settings: ['Configurações', 'Do seu jeito.', 'Conecte sua conta e escolha como manter sua cópia local.']
+};
+
+function bytes(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return '0 B';
+  const index = Math.min(4, Math.floor(Math.log(n) / Math.log(1024)));
+  return (n / 1024 ** index).toFixed(index ? 1 : 0) + ' ' + ['B', 'KiB', 'MiB', 'GiB', 'TiB'][index];
+}
+
+function duration(seconds) {
+  if (seconds === null || !Number.isFinite(seconds)) return 'Calculando…';
+  if (seconds < 60) return 'Menos de 1 min';
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return minutes + ' min';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + ' h ' + minutes % 60 + ' min';
+  return Math.floor(hours / 24) + ' d ' + hours % 24 + ' h';
+}
+
+function toast(message) {
+  $('toast').textContent = message;
+  $('toast').hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $('toast').hidden = true; }, 7000);
+}
+
+function currentPage() {
+  const name = window.location.hash.slice(1);
+  return Object.hasOwn(pages, name) ? name : 'overview';
+}
+
+function navigate(page = currentPage()) {
+  const [breadcrumb, title, description] = pages[page];
+  document.querySelectorAll('[data-page]').forEach(panel => { panel.hidden = panel.dataset.page !== page; });
+  document.querySelectorAll('[data-nav]').forEach(link => {
+    const active = link.dataset.nav === page;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+  $('breadcrumb').textContent = breadcrumb;
+  $('page-title').replaceChildren(document.createTextNode(title.slice(0, -1)));
+  const dot = document.createElement('span');
+  dot.textContent = '.';
+  $('page-title').append(dot);
+  $('page-description').textContent = description;
+  document.title = breadcrumb + ' · HitechDrive';
+  window.dispatchEvent(new CustomEvent('hitech:navigate', {detail: page}));
+}
+
+async function requestJSON(url, options = {}) {
+  const {timeoutMs = 10000, ...fetchOptions} = options;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {...fetchOptions, signal: controller.signal});
+    let value;
+    try { value = await response.json(); }
+    catch { throw Error('O serviço retornou uma resposta inesperada. Atualize a página e tente novamente.'); }
+    if (!response.ok) {
+      if (response.status === 404 && ['/api/workers', '/api/bandwidth', '/api/retry-errors'].includes(url)) {
+        throw Error('O painel foi atualizado, mas o serviço ainda está na versão antiga. Reinicie drive-espelho no servidor.');
+      }
+      throw Error(value.error || 'Não foi possível concluir a solicitação.');
+    }
+    return value;
+  } finally { clearTimeout(timeout); }
+}
+
+function post(path, data = {}, timeoutMs = 10000) {
+  return requestJSON('/api/' + path, {
+    method: 'POST', timeoutMs,
+    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf},
+    body: JSON.stringify(data)
+  });
+}
+
+function setDisabled(id, value) { $(id).disabled = value || busyActions.has(id); }
+
+function renderState(s) {
+  $('phase').textContent = phases[s.phase] || 'Consultando serviço';
+  $('badge').textContent = s.connected ? 'Conta conectada' : 'Conta não conectada';
+  $('badge').dataset.connected = String(!!s.connected);
+  $('badge').dataset.offline = 'false';
+  $('sync-dot').dataset.running = String(['baixando', 'verificando'].includes(s.phase) && !s.paused);
+  const activeCount = (s.active || []).length;
+  $('current').textContent = s.paused && activeCount
+    ? 'Pausando. Aguardando as transferências em andamento pararem.'
+    : s.phase === 'baixando'
+      ? activeCount ? activeCount + ' transferências em andamento.' : 'Preparando os próximos arquivos.'
+      : s.phase === 'aguardando' && s.last_sync
+        ? 'Ciclo concluído. O próximo será iniciado automaticamente.'
+        : s.current || (s.connected ? 'Tudo pronto para sincronizar.' : 'Conecte sua conta em Configurações para começar.');
+  $('connection').textContent = s.connected
+    ? 'Autorização salva para acessar seu Drive somente para leitura.'
+    : s.credentials ? 'Credenciais importadas. Agora autorize sua conta Google.' : 'Importe as credenciais do seu aplicativo Google para começar.';
+  $('files').textContent = s.total + ' arquivos no acervo · ' + s.done + ' processados neste ciclo';
+  $('last').textContent = s.last_sync ? 'Último ciclo: ' + s.last_sync : 'Primeiro ciclo ainda não concluído';
+  $('error').textContent = s.error || '';
+  $('error').hidden = !s.error;
+  const maintenanceBusy = s.maintenance && s.maintenance.state === 'running';
+  const draining = s.paused && (activeCount > 0 || ['baixando', 'verificando'].includes(s.phase));
+  setDisabled('start', maintenanceBusy || !s.connected || draining || !s.paused && ['baixando', 'verificando'].includes(s.phase));
+  setDisabled('pause', s.paused);
+  setDisabled('save', maintenanceBusy || !s.paused || draining);
+  setDisabled('connect', maintenanceBusy || !s.paused || draining);
+  $('connect').textContent = s.credentials ? 'Conectar com Google' : 'Configurar acesso';
+  $('client').disabled = maintenanceBusy || !s.paused || draining || busyActions.has('client');
+  $('destination').textContent = s.destination;
+  $('bandwidth-status').textContent = !Object.hasOwn(s, 'bandwidth_mib')
+    ? 'Reinicie o serviço no servidor para ativar este recurso.'
+    : s.bandwidth_mib ? 'Limite aplicado: ' + s.bandwidth_mib + ' MiB/s no total.' : 'Sem limite. Use 0 para manter a velocidade livre.';
+  if (!initialized) {
+    $('root').value = s.root;
+    $('interval').value = String(s.interval);
+    $('workers').value = String(s.workers || 4);
+    $('bandwidth').value = String(s.bandwidth_mib || 0);
+    initialized = true;
+  }
+  renderWorkers(s);
+  renderLibrary(s);
+  renderErrors(s);
+  renderEvents(s.events || []);
+  window.dispatchEvent(new CustomEvent('hitech:status', {detail:s}));
+}
+
+function renderLibrary(s) {
+  const ready = !!s.progress_ready;
+  const globalPercent = ready && s.total_bytes ? Math.min(100, s.copied_bytes / s.total_bytes * 100) : 0;
+  $('progress').value = globalPercent;
+  $('global-total').textContent = ready
+    ? bytes(s.copied_bytes) + ' / ' + bytes(s.total_bytes) + ' · ' + globalPercent.toFixed(1) + '%'
+    : 'Consultando total…';
+  $('total-size').textContent = ready ? bytes(s.total_bytes) : '—';
+  $('copied-size').textContent = ready ? bytes(s.copied_bytes) : '—';
+  $('remaining-size').textContent = ready ? bytes(s.remaining_bytes) : '—';
+  $('eta').textContent = s.paused ? 'Pausado'
+    : s.phase === 'erro' ? 'Aguardando'
+    : s.phase === 'aguardando' && s.last_sync ? 'Concluído'
+    : ready && s.remaining_bytes === 0 ? 'Finalizando' : duration(s.eta_seconds);
+  $('size-note').textContent = !Object.hasOwn(s, 'error_count')
+    ? 'Reinicie o serviço no servidor para carregar os novos indicadores.'
+    : !ready ? 'O progresso aparece após consultar o catálogo.'
+      : 'Os bytes recebidos incluem parciais. A validação continua antes de concluir.' +
+        (s.unknown_size_files ? ' ' + s.unknown_size_files + ' documentos/links sem tamanho conhecido ficam fora deste total.' : '');
+  const downloads = s.active || [];
+  const known = downloads.filter(a => a.size > 0);
+  const total = known.reduce((sum, a) => sum + a.size, 0);
+  const received = known.reduce((sum, a) => sum + Math.min(a.bytes, a.size), 0);
+  const percent = total ? Math.min(100, received / total * 100) : 0;
+  $('active-progress').value = percent;
+  $('active-summary').textContent = downloads.length ? downloads.length + ' em andamento' : 'Sem transferências';
+  $('transfer').textContent = downloads.length
+    ? bytes(received) + ' de ' + bytes(total) + ' · ' + percent.toFixed(1) + '% · ' + bytes(s.speed) + '/s' +
+      (known.length < downloads.length ? ' · Há arquivos sem tamanho conhecido' : '')
+    : 'Total dos downloads em andamento';
+  $('downloads-empty').hidden = downloads.length > 0;
+  renderTransfers(downloads);
+}
+
+function makeIcon(reference) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('icon');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', reference);
+  svg.append(use);
+  return svg;
+}
+
+function newTransfer() {
+  const row = document.createElement('li');
+  row.className = 'transfer-row';
+  const symbol = document.createElement('span');
+  symbol.className = 'file-symbol';
+  symbol.append(makeIcon('#i-file'));
+  const content = document.createElement('div');
+  content.className = 'transfer-content';
+  const name = document.createElement('strong'); name.className = 'transfer-name';
+  const path = document.createElement('span'); path.className = 'transfer-path';
+  const bar = document.createElement('progress'); bar.max = 100;
+  const meta = document.createElement('div'); meta.className = 'transfer-meta';
+  content.append(name, path, bar, meta);
+  const side = document.createElement('div'); side.className = 'transfer-side';
+  const percent = document.createElement('strong');
+  const speed = document.createElement('small');
+  side.append(percent, speed);
+  row.append(symbol, content, side);
+  return {row, name, path, bar, meta, percent, speed};
+}
+
+function renderTransfers(downloads) {
+  const keys = new Set(downloads.map(a => a.name));
+  for (const [key, nodes] of transferNodes) {
+    if (!keys.has(key)) { nodes.row.remove(); transferNodes.delete(key); }
+  }
+  for (const file of downloads) {
+    let nodes = transferNodes.get(file.name);
+    if (!nodes) { nodes = newTransfer(); transferNodes.set(file.name, nodes); $('active-transfers').append(nodes.row); }
+    const parts = file.name.split('/');
+    nodes.name.textContent = parts.pop(); nodes.name.title = file.name;
+    nodes.path.textContent = parts.length ? parts.join(' / ') : 'Meu Drive'; nodes.path.title = file.name;
+    const percent = file.size ? Math.min(100, file.bytes / file.size * 100) : null;
+    nodes.percent.textContent = percent === null ? '—' : percent.toFixed(1) + '%';
+    if (percent === null) nodes.bar.removeAttribute('value'); else nodes.bar.value = percent;
+    nodes.bar.setAttribute('aria-label', 'Progresso de ' + file.name);
+    nodes.meta.textContent = bytes(file.bytes) + ' / ' + (file.size ? bytes(file.size) : 'tamanho desconhecido');
+    nodes.speed.textContent = bytes(file.speed) + '/s';
+  }
+}
+
+function renderErrors(s) {
+  const count = s.error_count || 0;
+  $('errors-title').textContent = count ? count + (count === 1 ? ' arquivo precisa de atenção' : ' arquivos precisam de atenção') : 'Nenhuma pendência registrada';
+  $('nav-error-count').textContent = String(count);
+  $('nav-error-count').hidden = !count;
+  $('issues-empty').hidden = count > 0;
+  setDisabled('retry-errors', !count || !s.connected || ['baixando', 'verificando'].includes(s.phase) || (s.active || []).length > 0);
+  $('errors-note').textContent = count
+    ? 'A nova tentativa retoma pendentes e reconhece arquivos já concluídos. ' + (count > 100 ? 'Mostrando os 100 primeiros de ' + count + '.' : 'O histórico permanece salvo após reiniciar.')
+    : 'Se algum arquivo falhar, o motivo e o número de tentativas aparecerão aqui.';
+  const key = JSON.stringify(s.errors || []);
+  if (key === errorsKey) return;
+  errorsKey = key;
+  $('file-errors').replaceChildren(...(s.errors || []).map(error => {
+    const li = document.createElement('li');
+    const name = document.createElement('strong'); name.textContent = error.name;
+    const message = document.createElement('p'); message.textContent = error.message;
+    const info = document.createElement('small'); info.textContent = error.attempts + ' tentativa(s) · Última falha: ' + error.time;
+    li.append(name, message, info);
+    return li;
+  }));
+}
+
+function renderEvents(events) {
+  const key = JSON.stringify(events);
+  if (key === eventsKey) return;
+  eventsKey = key;
+  $('events').replaceChildren(...events.map(event => {
+    const li = document.createElement('li');
+    const time = document.createElement('time'); time.textContent = event.time;
+    const text = document.createElement('span'); text.textContent = event.text;
+    li.append(time, text);
+    return li;
+  }));
+  if (!events.length) {
+    const li = document.createElement('li');
+    li.textContent = 'Ainda não há atividade nesta sessão.';
+    $('events').append(li);
+  }
+}
+
+function renderWorkers(s) {
+  if (!s.workers_live) { $('workers-status').textContent = 'Reinicie o serviço no servidor para alterar ao vivo.'; return; }
+  if (savingWorkers) return;
+  const count = (s.active || []).length;
+  $('workers-status').textContent = 'Aplicado: ' + s.workers + ' · Ativos: ' + count +
+    (count > s.workers ? ' · Aguardando os já iniciados terminarem.' : ' · Alteração automática.');
+  if (document.activeElement !== $('workers')) $('workers').value = String(s.workers);
+}
+
+async function refresh() {
+  if (refreshBusy || document.hidden) return;
+  refreshBusy = true;
+  try {
+    const status = await requestJSON('/api/status');
+    latest = status;
+    csrf = status.csrf;
+    renderState(status);
+  } catch (error) {
+    $('badge').textContent = 'Serviço desconectado';
+    $('badge').dataset.offline = 'true';
+    $('error').textContent = 'Não foi possível atualizar o painel. Verifique o serviço e o túnel SSH; os números exibidos podem estar desatualizados.';
+    $('error').hidden = false;
+  } finally { refreshBusy = false; }
+}
+
+function action(id, callback) {
+  $(id).addEventListener('click', async () => {
+    if (busyActions.has(id)) return;
+    busyActions.add(id); $(id).disabled = true;
+    try { await callback(); }
+    catch (error) { toast(error.message); }
+    finally { busyActions.delete(id); $(id).disabled = false; await refresh(); }
+  });
+}
+
+action('retry-errors', async () => {
+  if (!latest || !Object.hasOwn(latest, 'error_count')) throw Error('Reinicie o serviço no servidor para carregar esta atualização.');
+  await post('retry-errors'); toast('Nova tentativa solicitada. Os arquivos já concluídos serão reconhecidos.');
+});
+action('apply-bandwidth', async () => {
+  if (!latest || !Object.hasOwn(latest, 'bandwidth_mib')) throw Error('Reinicie drive-espelho no servidor para aplicar o limite.');
+  const input = $('bandwidth');
+  if (!input.value.trim() || !input.checkValidity()) throw Error('Informe um limite válido em MiB/s; 0 = sem limite.');
+  await post('bandwidth', {bandwidth_mib: Number(input.value)});
+  toast('Limite aplicado aos downloads em andamento.');
+});
+action('start', () => post('start'));
+action('pause', () => post('pause'));
+action('save', async () => {
+  await post('settings', {root: $('root').value, interval: Number($('interval').value), workers: Number($('workers').value)});
+  toast('Configuração salva.');
+});
+action('connect', async () => {
+  if (!latest) throw Error('Aguarde o painel conectar ao serviço.');
+  if (!latest.credentials) {
+    window.location.hash = 'settings'; navigate('settings');
+    $('google-setup').open = true;
+    $('google-setup').scrollIntoView({behavior: 'smooth', block: 'center'});
+    toast('Crie seu aplicativo no Google Cloud e importe o JSON. As instruções estão abertas abaixo.');
+    return;
+  }
+  if (!latest.paused) throw Error('Pause a sincronização antes de conectar a conta.');
+  const response = await post('connect'); window.location.assign(response.url);
+});
+$('client').addEventListener('change', async event => {
+  busyActions.add('client');
+  try {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 65536) throw Error('JSON grande demais. Selecione as credenciais OAuth.');
+    await post('client', JSON.parse(await file.text()));
+    toast('Credenciais importadas. Agora conecte sua conta.');
+  } catch (error) { toast(error.message); }
+  finally { busyActions.delete('client'); $('client').value = ''; await refresh(); }
+});
+$('workers').addEventListener('change', async () => {
+  if (savingWorkers) return;
+  savingWorkers = true; $('workers').disabled = true;
+  $('workers-status').textContent = 'Aplicando quantidade…';
+  try {
+    if (!latest || !latest.workers_live) throw Error('Reinicie drive-espelho no servidor para alterar a quantidade ao vivo.');
+    const workers = Number($('workers').value);
+    await post('workers', {workers}); latest.workers = workers;
+    toast('Quantidade aplicada: ' + workers + '. Os já iniciados terminam normalmente.');
+  } catch (error) { if (latest) $('workers').value = String(latest.workers); toast(error.message); }
+  finally { savingWorkers = false; $('workers').disabled = false; await refresh(); }
+});
+window.addEventListener('hashchange', () => navigate());
+document.querySelector('.skip-link').addEventListener('click', event => {
+  event.preventDefault();
+  $('main').focus();
+  $('main').scrollIntoView({block: 'start'});
+});
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  const page = link.getAttribute('href').slice(1);
+  if (!Object.hasOwn(pages, page)) return;
+  link.addEventListener('click', event => {
+    event.preventDefault();
+    if (window.location.hash === '#' + page) navigate(page); else window.location.hash = page;
+  });
+});
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+navigate();
+refresh();
+setInterval(refresh, 1500);
+
+let diagnosticInitialized=false, diagnosticBusy=false, lastDiagnostic=null;
+const diskColors=['#6D28D9','#D97706','#059669','#DB2777','#2563EB','#475569'];
+function plot(canvas,history,series,fixedMax=null){
+ const width=canvas.clientWidth||450,height=190,dpr=Math.min(window.devicePixelRatio||1,2);
+ canvas.width=width*dpr;canvas.height=height*dpr;
+ const c=canvas.getContext('2d');c.scale(dpr,dpr);
+ const left=44,right=12,top=16,bottom=28,w=width-left-right,h=height-top-bottom;
+ const all=series.flatMap(s=>history.map(p=>s.value(p))).filter(v=>v!==null&&Number.isFinite(v));
+ const max=fixedMax||Math.max(1,...all)*1.15;
+ const theme=getComputedStyle(document.documentElement),grid=theme.getPropertyValue('--chart-grid').trim()||'#E9E7EF',text=theme.getPropertyValue('--chart-text').trim()||'#766A83';
+ c.font='11px system-ui';c.lineWidth=1;
+ for(let i=0;i<=4;i++){let y=top+h-i*h/4;c.strokeStyle=grid;c.beginPath();c.moveTo(left,y);c.lineTo(width-right,y);c.stroke();c.fillStyle=text;c.fillText((max*i/4).toFixed(max<10?1:0),3,y+4);}
+ if(history.length<2){c.fillStyle=text;c.fillText('Aguardando amostras…',left+14,top+h/2);return;}
+ const first=history[0].time,last=history[history.length-1].time,span=Math.max(.01,last-first);
+ for(const s of series){c.strokeStyle=s.color;c.lineWidth=2;c.beginPath();let drawing=false;for(const p of history){let v=s.value(p);if(v===null||!Number.isFinite(v)){drawing=false;continue;}let x=left+(p.time-first)/span*w,y=top+h-Math.min(max,Math.max(0,v))/max*h;if(drawing)c.lineTo(x,y);else c.moveTo(x,y);drawing=true;}c.stroke();}
+ c.fillStyle=text;c.fillText('-'+Math.round(span)+' s',left,height-8);c.fillText('agora',width-44,height-8);
+}
+function metricText(value,digits=1){return value===null||value===undefined?'—':Number(value).toFixed(digits);}
+function renderDiagnostics(d){
+ lastDiagnostic=d;
+ const p=d.current,disks=p.disks||[],history=d.history||[];
+ const arrays=d.arrays||[];
+ $('raid-health').textContent=arrays.length?arrays.map(a=>a.name+' · '+a.level.toUpperCase()+' · '+a.members.length+' membros · '+(a.degraded===0?'sem membros ausentes':a.degraded===null?'estado indisponível':a.degraded+' membro(s) ausente(s)')+' · operação: '+a.sync_action).join(' | '):'Não foi possível ler o estado de um RAID10 neste ambiente.';
+ plot($('disk-chart'),history,disks.map((disk,i)=>({color:diskColors[i%diskColors.length],value:p=>{const match=p.disks.find(x=>x.name===disk.name);return match&&match.metrics?match.metrics.busy_pct:null;}})),100);
+ $('disk-legend').textContent=disks.map((disk,i)=>['Roxo','Laranja','Verde','Rosa','Azul','Cinza'][i%diskColors.length]+': '+disk.name).join(' · ');
+ plot($('network-chart'),history,[{color:'#6D28D9',value:p=>p.google_bps===null?null:p.google_bps/1048576},{color:'#059669',value:p=>p.rx_bps===null?null:p.rx_bps/1048576},{color:'#D97706',value:p=>p.networks.length?p.networks.reduce((sum,n)=>sum+(n.tx_bps||0),0)/1048576:null}]);
+ $('disk-metrics').replaceChildren(...disks.map(disk=>{let article=document.createElement('article'),title=document.createElement('span'),value=document.createElement('strong'),detail=document.createElement('small'),model=document.createElement('small'),m=disk.metrics;title.textContent=disk.name;value.textContent=m?metricText(m.busy_pct)+'% ocupado':'Aguardando…';model.textContent=disk.model;detail.textContent=m?'Lê '+bytes(m.read_bps)+'/s · Grava '+bytes(m.write_bps)+'/s · Latência '+metricText(m.await_ms)+' ms · Fila '+metricText(m.queue):'Taxas disponíveis após a segunda amostra.';if(m&&m.busy_pct>=90)article.className='busy';article.append(title,value,model,detail);return article;}));
+ const net=p.networks.map(n=>n.name+': recebe '+(n.rx_bps===null?'—':bytes(n.rx_bps)+'/s')+' · envia '+(n.tx_bps===null?'—':bytes(n.tx_bps)+'/s')+' · '+(n.link_rx_pct===null?'velocidade do enlace desconhecida':metricText(n.link_rx_pct)+'% do enlace de '+n.link_mbps+' Mbps')).join(' | ');
+ $('network-metrics').textContent='Google: '+(p.google_bps===null?'—':bytes(p.google_bps)+'/s')+' · Internet: '+(p.internet_pct===null?'informe seu plano para estimar %':metricText(p.internet_pct)+'% do plano informado')+' · Espera por I/O no sistema: '+metricText(p.io_pressure_pct)+'%'+(net?' | '+net:' | Placa física indisponível.');
+ const labels={api:'Resposta da API',receive:'Leitura Google/rede',write:'Gravação local',verify:'Checksum',throttle:'Limitador de banda'};
+ $('stage-metrics').replaceChildren(...Object.entries(labels).map(([key,label])=>{let div=document.createElement('div'),name=document.createElement('span'),bar=document.createElement('progress');const value=p.stages_pct[key];name.textContent=label+': '+metricText(value)+'%';bar.max=100;bar.value=value||0;div.append(name,bar);return div;}));
+ $('diagnostic-warnings').replaceChildren(...d.warnings.map(message=>{let li=document.createElement('li');li.textContent=message;return li;}));
+ if(!diagnosticInitialized){$('internet-mbps').value=String(d.internet_mbps||0);diagnosticInitialized=true;}
+}
+async function refreshDiagnostics(){if(diagnosticBusy||document.hidden||$('diagnostics-page').hidden)return;diagnosticBusy=true;try{const r=await fetch('/api/diagnostics');if(r.status===404){$('raid-health').textContent='Reinicie o serviço no servidor para ativar os gráficos desta atualização.';return;}if(!r.ok)throw Error('Falha ao consultar diagnóstico');renderDiagnostics(await r.json());}catch(e){$('raid-health').textContent='Diagnóstico indisponível: '+e.message;}finally{diagnosticBusy=false;}}
+$('save-internet').addEventListener('click',async()=>{try{const input=$('internet-mbps');if(!input.value.trim()||!input.checkValidity())throw Error('Informe Mbps válidos, ou 0 para desconhecido.');await post('diagnostics-settings',{internet_mbps:Number(input.value)});toast('Referência de internet salva.');setTimeout(refreshDiagnostics,1100);}catch(e){toast(e.message);}});
+window.addEventListener('hitech:navigate',event=>{if(event.detail==='diagnostics')refreshDiagnostics();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDiagnostics();});
+refreshDiagnostics();setInterval(refreshDiagnostics,2500);
+
+window.addEventListener('hitech:theme',()=>{if(lastDiagnostic&&!$('diagnostics-page').hidden)renderDiagnostics(lastDiagnostic);});
+
+'use strict';
+let cleanupPreview = null;
+let maintenanceBusyAction = false;
+function maintenanceReady() {
+  if (!latest || !latest.maintenance_supported) throw Error('Reinicie drive-espelho no servidor para carregar a manutenção.');
+}
+function rate() {
+  const input = $('maintenance-rate');
+  if (!input.value.trim() || !input.checkValidity()) throw Error('Informe um limite válido em MiB/s.');
+  return Number(input.value);
+}
+function renderMaintenance(s) {
+  const task = s.maintenance || {}, running = task.state === 'running';
+  const drained = s.paused && !(s.active || []).length && !['baixando','verificando'].includes(s.phase);
+  const ready = !!s.maintenance_supported && drained && !running && !maintenanceBusyAction;
+  $('maintenance-compatibility').hidden = !!s.maintenance_supported;
+  for (const id of ['recovery-export','cleanup-preview','audit-start','rebuild-start']) $(id).disabled = !ready;
+  $('recovery-file').disabled = !ready || s.tracked > 0;
+  $('recovery-checkpoint').disabled = !ready || s.tracked > 0 || !task.checkpoint_available;
+  $('maintenance-cancel').disabled = !running;
+  $('cleanup-delete').disabled = !ready || !cleanupPreview;
+  const names = {audit:'Auditoria',rebuild:'Reconhecimento'};
+  const states = {running:'em andamento',complete:'concluído',cancelled:'cancelado',error:'com erro'};
+  $('maintenance-task').textContent = task.kind
+    ? (names[task.kind] || 'Manutenção')+' '+(states[task.state] || task.state)+' · '+task.done+' / '+task.total+' arquivos · '+bytes(task.bytes)+' lidos'+(task.current?' · '+task.current:'')+(task.error?' · '+task.error:'')
+    : 'Pause a sincronização e escolha uma operação. Nenhuma verificação pesada começa automaticamente.';
+  $('maintenance-progress').value = task.total ? Math.min(100,task.done/task.total*100) : 0;
+  const report = task.report || {};
+  $('maintenance-report').textContent = report.finished
+    ? 'Último relatório: '+report.finished+' · '+report.ok+' conferidos · '+report.failed+' com problema · '+report.skipped+' sem referência/ignorados. Resultado: '+report.state
+    : 'Nenhum relatório de manutenção ainda.';
+  $('maintenance-findings').replaceChildren(...(report.findings || []).map(item => {
+    const li=document.createElement('li'),name=document.createElement('strong'),message=document.createElement('p');
+    name.textContent=item.path;message.textContent=item.message;li.append(name,message);return li;
+  }));
+  $('system-alerts').hidden = !(s.alerts || []).length;
+  $('system-alerts').replaceChildren(...(s.alerts || []).map(alert => {
+    const p=document.createElement('p'),link=document.createElement('a');p.append(document.createTextNode(alert.message));
+    link.href=alert.kind==='auth'?'#settings':alert.kind==='raid'||alert.kind==='storage'?'#diagnostics':'#maintenance';
+    link.textContent='Ver detalhes ↗';p.append(link);return p;
+  }));
+}
+async function maintenanceAction(callback) {
+  if (maintenanceBusyAction) return;
+  maintenanceBusyAction=true;
+  if(latest) renderMaintenance(latest);
+  try { maintenanceReady();await callback(); }
+  catch(error){toast(error.message);}
+  finally {maintenanceBusyAction=false;await refresh();}
+}
+$('recovery-export').addEventListener('click',()=>maintenanceAction(async()=>{
+  const bundle=await post('recovery-export',{},60000);
+  const blob=new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='hitechdrive-recovery-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  toast('Backup privado gerado, sem tokens OAuth. Guarde-o fora do computador que pretende reinstalar.');
+}));
+$('recovery-file').addEventListener('change',event=>maintenanceAction(async()=>{
+  const file=event.target.files[0];if(!file)return;
+  try {
+    if(file.size>32*1024*1024)throw Error('O backup excede 32 MiB.');
+    await post('recovery-import',JSON.parse(await file.text()),60000);
+    toast('Manifesto recuperado. Reconecte a conta Google se necessário.');
+  } finally {$('recovery-file').value='';}
+}));
+$('recovery-checkpoint').addEventListener('click',()=>maintenanceAction(async()=>{
+  await post('recovery-checkpoint-import',{},60000);toast('Checkpoint recuperado; a réplica permanece pausada para revisão.');
+}));
+for(const [id,kind] of [['audit-start','audit'],['rebuild-start','rebuild']]){
+  $(id).addEventListener('click',()=>maintenanceAction(async()=>{
+    await post('maintenance-start',{kind,rate_mib:rate()});toast('Verificação iniciada. Pode cancelar sem apagar os arquivos.');
+  }));
+}
+$('maintenance-cancel').addEventListener('click',()=>maintenanceAction(async()=>{
+  await post('maintenance-cancel');toast('Cancelamento solicitado. Aguardando a leitura atual terminar.');
+}));
+$('cleanup-preview').addEventListener('click',()=>maintenanceAction(async()=>{
+  cleanupPreview=await post('cleanup-preview',{},60000);
+  $('cleanup-summary').textContent=cleanupPreview.count+' arquivos revisados · Lixeira: '+bytes(cleanupPreview.trash_bytes)+' · Parciais: '+bytes(cleanupPreview.partial_bytes)+(cleanupPreview.count>100?' · Mostrando 100 primeiros.':'');
+  $('cleanup-files').replaceChildren(...cleanupPreview.entries.map(item=>{const li=document.createElement('li');li.textContent=item.path+' · '+bytes(item.size);return li;}));
+  $('cleanup-confirmation').value='';
+}));
+$('cleanup-delete').addEventListener('click',()=>maintenanceAction(async()=>{
+  if(!cleanupPreview)throw Error('Calcule o espaço e revise os arquivos primeiro.');
+  const result=await post('cleanup-confirm',{token:cleanupPreview.token,kind:$('cleanup-kind').value,confirmation:$('cleanup-confirmation').value},60000);
+  cleanupPreview=null;$('cleanup-files').replaceChildren();$('cleanup-confirmation').value='';
+  $('cleanup-summary').textContent=result.removed+' arquivos excluídos; '+result.skipped+' alterados preservados. Gere outra prévia se necessário.';
+  toast('Limpeza concluída com a confirmação fornecida.');
+}));
+window.addEventListener('hitech:status',event=>renderMaintenance(event.detail));
+if(latest)renderMaintenance(latest);
+</script></body>
+</html>

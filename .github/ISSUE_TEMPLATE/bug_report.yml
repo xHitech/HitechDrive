@@ -1,0 +1,39 @@
+name: Bug report / Relatar erro
+description: Report a reproducible problem without sharing private data.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "English or Portuguese is welcome. For vulnerabilities, follow SECURITY.md. Do not upload OAuth JSON, tokens, recovery backups, private filenames, addresses or disk serials."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / Ambiente
+      description: Linux distribution, Python version, browser and commit or release. No personal addresses or device identifiers.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Como reproduzir
+      description: Use synthetic file and folder names.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior / Esperado e observado
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence / Evidências sem dados pessoais
+      description: Optional redacted error message or screenshot. Never attach your private state directory.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy review / Revisão de privacidade
+      options:
+        - label: I removed personal data and credentials from this report and its attachments.
+          required: true

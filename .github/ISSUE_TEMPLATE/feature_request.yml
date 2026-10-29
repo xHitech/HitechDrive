@@ -1,0 +1,21 @@
+name: Feature request / Sugerir melhoria
+description: Describe a problem HitechDrive could solve better.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Problema
+      description: What are you trying to do? Avoid private file names or account details.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / Comportamento desejado
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or constraints / Alternativas e limitações
