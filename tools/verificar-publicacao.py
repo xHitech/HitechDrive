@@ -7,7 +7,7 @@ import sys
 
 root=Path(__file__).resolve().parent.parent
 tracked=subprocess.check_output(['git','-C',str(root),'ls-files','-z']).decode().split('\0')
-forbidden_names={'instance.json','config.json','account.json','manifest.json','catalog.json','errors.json','tokens.json','client.json','PLANO_DE_POLIMENTO.md'}
+forbidden_names={'instance.json','config.json','account.json','manifest.json','catalog.json','errors.json','tokens.json','client.json','PLANO_DE_POLIMENTO.md','auth-status.json','audit-report.json','moves.pending.json','recovery.pending.json','recovery.json','hitechdrive-recovery-backup.json'}
 patterns={
  'chave privada':r'-----BEGIN (?:[A-Z ]+)?PRIVATE KEY-----',
  'token GitHub':r'\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})',

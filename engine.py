@@ -11,9 +11,11 @@ import threading
 import time
 import urllib.parse
 
+from maintenance import Maintenance
+import relocations
 from diagnostics import Diagnostics
 from bandwidth import BandwidthLimiter
-from drive import Drive, EXPORTS, FOLDER, Paused, load_json, save_json
+from drive import Drive, EXPORTS, FOLDER, Paused, AuthenticationRequired, StorageUnavailable, InsufficientSpace, load_json, save_json
 DEST = Path('/srv/media/GoogleDrive')
 RESERVED = '.drive-espelho'
 
@@ -40,6 +42,12 @@ class Engine:
         self.state = Path(state)
         self.state.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(self.state, 0o700)
+        pending = load_json(self.state / 'recovery.pending.json')
+        if pending:
+            if set(pending) != {'account.json', 'config.json', 'manifest.json'}:
+                raise RuntimeError('Diário de recuperação inválido; preserve os arquivos de estado para revisão.')
+            for name, content in pending.items(): save_json(self.state / name, content)
+            (self.state / 'recovery.pending.json').unlink()
         instance = load_json(self.state / 'instance.json')
         self.mountpoint = Path(instance.get('mountpoint', '/srv/media')).expanduser()
         self.expected_uuid = instance.get('volume_uuid', '')
@@ -67,6 +75,10 @@ class Engine:
         self.config.setdefault('internet_mbps', 0)
         self.diagnostics = Diagnostics(self.diagnostic_context)
         self.drive.observe = self.diagnostics.observe
+        self.operation_lock = threading.Lock()
+        self.maintenance = Maintenance(self)
+        self.auth_error = load_json(self.state/'auth-status.json').get('error', '')
+        self.alert_cache = (0, [])
         self.thread = None
 
     def diagnostic_context(self):
@@ -85,7 +97,7 @@ class Engine:
 
     def mount_guard(self):
         if not self.expected_uuid:
-            raise RuntimeError('Configure o volume de destino com configurar-volume.py antes de sincronizar.')
+            raise StorageUnavailable('Configure o volume de destino com configurar-volume.py antes de sincronizar.')
         if not self.destination.is_absolute() or not self.mountpoint.is_absolute():
             raise RuntimeError('O volume e o destino precisam usar caminhos absolutos.')
         if not self.destination.resolve().is_relative_to(self.mountpoint.resolve()) or self.destination.resolve() == self.mountpoint.resolve():
@@ -93,7 +105,7 @@ class Engine:
         probe = subprocess.run(['findmnt', '--noheadings', '--raw', '--output', 'UUID', '--mountpoint', str(self.mountpoint)],
                                capture_output=True, text=True)
         if probe.returncode or probe.stdout.strip() != self.expected_uuid:
-            raise RuntimeError('O volume esperado não está montado no destino configurado. Sincronização bloqueada.')
+            raise StorageUnavailable('O volume esperado não está montado no destino configurado. Sincronização bloqueada.')
         if self.mountpoint.is_symlink():
             raise RuntimeError('O ponto de montagem não pode ser um link simbólico.')
 
@@ -125,6 +137,8 @@ class Engine:
 
     def settings(self, root, interval, workers=None):
         with self.lock:
+            if self.maintenance.snapshot()['state'] == 'running':
+                raise ValueError('Aguarde a manutenção terminar antes de alterar a configuração.')
             if not self.config['paused'] or (self.thread and self.status['phase'] not in ('pausado', 'erro', 'aguardando')):
                 raise ValueError('Pause e espere a operação atual terminar antes de alterar a configuração.')
             if self.manifest['files'] and root != self.config['root']:
@@ -165,13 +179,16 @@ class Engine:
         self.event(f'Limite total de download: {value:g} MiB/s' if value else 'Download sem limite de velocidade.')
 
     def pause(self, paused):
+        if not paused and self.maintenance.snapshot()['state'] == 'running':
+            raise ValueError('Aguarde ou cancele a manutenção antes de retomar a sincronização.')
         with self.lock:
             self.config['paused'] = paused
             save_json(self.state / 'config.json', self.config)
             self.wake.set()
 
-    def scan(self):
+    def scan(self, check=None):
         """Never infer deletion from an interrupted/failed listing."""
+        checker = check or self.check
         root = self.config['root']
         metadata = self.drive.json('files/' + urllib.parse.quote(root, safe=''), {'fields': 'id,mimeType,trashed'})
         if metadata.get('mimeType') != FOLDER or metadata.get('trashed'):
@@ -179,7 +196,7 @@ class Engine:
         def progress(message):
             with self.lock:
                 self.status['current'] = message
-        catalog = self.drive.catalog(self.check, progress)
+        catalog = self.drive.catalog(checker, progress)
         by_parent = {}
         for item in catalog.values():
             for parent in item.get('parents', []):
@@ -187,7 +204,7 @@ class Engine:
         files, folders, seen = {}, [], set()
         stack = [(metadata['id'], '')]
         while stack:
-            self.check()
+            checker()
             parent, path = stack.pop()
             if parent in seen:
                 raise RuntimeError('Estrutura cíclica de pastas; sincronização interrompida.')
@@ -195,7 +212,7 @@ class Engine:
             children = by_parent.get(parent, [])
             occupied = set()
             for child in sorted(children, key=lambda x: x['id']):
-                self.check()
+                checker()
                 if child['mimeType'] == FOLDER:
                     name = component(child['name'])
                 else:
@@ -324,7 +341,7 @@ class Engine:
         needed = max(0, expected - initial)
         with self.lock:
             if shutil.disk_usage(self.destination).free < self.reserved_bytes + needed + 64 * 1024 * 1024:
-                raise RuntimeError('Espaço livre insuficiente no RAID. Confira também a lixeira local.')
+                raise InsufficientSpace('Espaço livre insuficiente no RAID. Confira também a lixeira local.')
             self.reserved_bytes += needed
             self.active[fid] = {'name': item['relative'], 'bytes': initial, 'size': expected, 'speed': 0}
             self.transfer_status()
@@ -409,7 +426,7 @@ class Engine:
                     item = pending.pop(future)
                     try:
                         future.result()
-                    except Paused:
+                    except (Paused, AuthenticationRequired, StorageUnavailable, InsufficientSpace):
                         raise
                     except Exception as exc:
                         message = f'{item["relative"]}: {exc}'
@@ -426,15 +443,21 @@ class Engine:
             raise RuntimeError(f'{len(errors)} arquivo(s) com erro. Exclusões adiadas. Primeiro erro: {errors[0]}')
 
     def sync(self):
+        with self.operation_lock:
+            return self._sync()
+
+    def _sync(self):
         self.guard(); self.check()
         if self.destination.is_symlink():
             raise RuntimeError('Destino é link simbólico.')
         self.destination.mkdir(parents=True, exist_ok=True)
         with self.lock:
             self.status.update(phase='verificando', error='', current='', done=0, total=0, bytes=0, size=0, speed=0, progress_ready=False)
+        relocations.recover(self)
         files, folders = self.scan()
         self.guard(); self.check()
         self.local(RESERVED + '/parciais').mkdir(parents=True, exist_ok=True)
+        relocations.apply(self, files)
         old = self.manifest['files']
         # Move old paths out of the way before applying renamed files, including swaps.
         for fid, entry in list(old.items()):
@@ -471,6 +494,11 @@ class Engine:
         with self.lock:
             self.status.update(phase='aguardando', current='', done=len(files), bytes=0, size=0,
                                speed=0, last_sync=self.manifest['last_sync'])
+        try:
+            self.maintenance.write_checkpoint()
+        except Exception as exc:
+            self.maintenance.checkpoint_error = str(exc)
+            self.event('Não foi possível atualizar o checkpoint de recuperação: ' + str(exc))
         self.event(f'Ciclo concluído: {len(files)} arquivos, {len(folders)} pastas.')
 
     def loop(self):
@@ -486,6 +514,13 @@ class Engine:
             except Paused:
                 with self.lock:
                     self.status.update(phase='pausado', speed=0)
+            except AuthenticationRequired as e:
+                self.auth_error = str(e)
+                self.alert_cache = (0, [])
+                save_json(self.state/'auth-status.json', {'error':self.auth_error})
+                self.pause(True)
+                with self.lock: self.status.update(phase='erro', error=self.auth_error, speed=0)
+                self.event(self.auth_error)
             except Exception as e:
                 with self.lock:
                     self.status.update(phase='erro', error=str(e), speed=0)
@@ -496,7 +531,40 @@ class Engine:
         self.thread = threading.Thread(target=self.loop, daemon=True)
         self.thread.start()
 
+    def clear_auth_error(self):
+        self.auth_error = ''
+        save_json(self.state/'auth-status.json', {})
+        self.alert_cache = (0, [])
+
+    def collect_alerts(self):
+        now = time.monotonic()
+        if now-self.alert_cache[0] < 15 and self.alert_cache[0]: return self.alert_cache[1]
+        alerts = []
+        if self.auth_error:
+            alerts.append({'kind':'auth','severity':'error','message':self.auth_error})
+        try:
+            self.guard()
+            usage = shutil.disk_usage(self.destination if self.destination.exists() else self.mountpoint)
+            if usage.free < max(256*1024*1024, usage.total*.02):
+                alerts.append({'kind':'space','severity':'warning','message':f'Pouco espaço livre no volume: {usage.free//(1024*1024)} MiB.'})
+            info = self.mountpoint.stat()
+            base = Path('/sys/dev/block') / f'{os.major(info.st_dev)}:{os.minor(info.st_dev)}' / 'md'
+            degraded = base/'degraded'
+            if degraded.exists() and int(degraded.read_text().strip()) > 0:
+                alerts.append({'kind':'raid','severity':'error','message':'RAID degradado: há membros ausentes. Confira o armazenamento.'})
+        except Exception as exc:
+            alerts.append({'kind':'storage','severity':'error','message':str(exc)})
+        if self.maintenance.checkpoint_error:
+            alerts.append({'kind':'recovery','severity':'warning','message':'O checkpoint de recuperação não foi atualizado: '+self.maintenance.checkpoint_error})
+        report = self.maintenance.snapshot().get('report', {})
+        if report.get('failed',0):
+            alerts.append({'kind':'integrity','severity':'warning','message':f'A última verificação encontrou {report["failed"]} arquivo(s) com problema. Veja o relatório de manutenção.'})
+        self.alert_cache = (now, alerts)
+        return alerts
+
     def snapshot(self):
+        maintenance = self.maintenance.snapshot()
+        alerts = self.collect_alerts()
         with self.lock:
             now = time.monotonic()
             samples = self.rate_samples
@@ -506,9 +574,9 @@ class Engine:
             remaining = max(0, self.status.get('total_bytes', 0) - self.status.get('copied_bytes', 0))
             eta = remaining / speed if speed > 0 and remaining > 0 else None
             failures = sorted(self.failures.values(), key=lambda f: (f['time'], f['id']), reverse=True)
-            return dict(self.status, remaining_bytes=remaining, overall_speed=speed, eta_seconds=eta,
+            return dict(self.status, maintenance=maintenance, alerts=alerts, maintenance_supported=True, remaining_bytes=remaining, overall_speed=speed, eta_seconds=eta,
                         errors=[dict(f) for f in failures[:100]], error_count=len(failures),
-                        connected=(self.state / 'tokens.json').exists(),
+                        connected=(self.state / 'tokens.json').exists() and not bool(self.auth_error),
                         credentials=(self.state / 'client.json').exists(), paused=self.config['paused'],
                         root=self.config['root'], interval=self.config['interval'], workers=self.config['workers'], workers_live=True, workers_draining=max(0,len(self.active)-self.config['workers']), bandwidth_mib=self.config['bandwidth_mib'],
                         destination=str(self.destination), tracked=len(self.manifest['files']))

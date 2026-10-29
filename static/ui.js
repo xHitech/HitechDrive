@@ -23,6 +23,7 @@ const pages = {
   diagnostics: ['Desempenho', 'Cada detalhe, à vista.', 'Discos, conexão e transferências. Sem adivinhação.'],
   issues: ['Pendências', 'Nada fica para trás.', 'Veja o que precisa de atenção e retome quando quiser.'],
   activity: ['Atividade', 'Seu acervo em movimento.', 'Os últimos passos da sua sincronização.'],
+  maintenance: ['Manutenção', 'Seu acervo, protegido.', 'Recupere, confira e revise o espaço com controle.'],
   settings: ['Configurações', 'Do seu jeito.', 'Conecte sua conta e escolha como manter sua cópia local.']
 };
 
@@ -75,10 +76,11 @@ function navigate(page = currentPage()) {
 }
 
 async function requestJSON(url, options = {}) {
+  const {timeoutMs = 10000, ...fetchOptions} = options;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {...options, signal: controller.signal});
+    const response = await fetch(url, {...fetchOptions, signal: controller.signal});
     let value;
     try { value = await response.json(); }
     catch { throw Error('O serviço retornou uma resposta inesperada. Atualize a página e tente novamente.'); }
@@ -92,9 +94,9 @@ async function requestJSON(url, options = {}) {
   } finally { clearTimeout(timeout); }
 }
 
-function post(path, data = {}) {
+function post(path, data = {}, timeoutMs = 10000) {
   return requestJSON('/api/' + path, {
-    method: 'POST',
+    method: 'POST', timeoutMs,
     headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf},
     body: JSON.stringify(data)
   });
@@ -123,13 +125,14 @@ function renderState(s) {
   $('last').textContent = s.last_sync ? 'Último ciclo: ' + s.last_sync : 'Primeiro ciclo ainda não concluído';
   $('error').textContent = s.error || '';
   $('error').hidden = !s.error;
+  const maintenanceBusy = s.maintenance && s.maintenance.state === 'running';
   const draining = s.paused && (activeCount > 0 || ['baixando', 'verificando'].includes(s.phase));
-  setDisabled('start', !s.connected || draining || !s.paused && ['baixando', 'verificando'].includes(s.phase));
+  setDisabled('start', maintenanceBusy || !s.connected || draining || !s.paused && ['baixando', 'verificando'].includes(s.phase));
   setDisabled('pause', s.paused);
-  setDisabled('save', !s.paused || draining);
-  setDisabled('connect', !s.paused || draining);
+  setDisabled('save', maintenanceBusy || !s.paused || draining);
+  setDisabled('connect', maintenanceBusy || !s.paused || draining);
   $('connect').textContent = s.credentials ? 'Conectar com Google' : 'Configurar acesso';
-  $('client').disabled = !s.paused || draining || busyActions.has('client');
+  $('client').disabled = maintenanceBusy || !s.paused || draining || busyActions.has('client');
   $('destination').textContent = s.destination;
   $('bandwidth-status').textContent = !Object.hasOwn(s, 'bandwidth_mib')
     ? 'Reinicie o serviço no servidor para ativar este recurso.'
@@ -145,6 +148,7 @@ function renderState(s) {
   renderLibrary(s);
   renderErrors(s);
   renderEvents(s.events || []);
+  window.dispatchEvent(new CustomEvent('hitech:status', {detail:s}));
 }
 
 function renderLibrary(s) {

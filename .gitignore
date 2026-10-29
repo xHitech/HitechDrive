@@ -37,3 +37,11 @@ backups/
 
 # Internal conversation/review handoff; contains local machine details
 docs/PLANO_DE_POLIMENTO.md
+
+# Private recovery, movement and audit state
+auth-status.json
+audit-report.json
+moves.pending.json
+recovery.pending.json
+hitechdrive-recovery-backup.json
+recovery.json

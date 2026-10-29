@@ -33,12 +33,24 @@ def save_json(path, data):
         os.fsync(f.fileno())
     os.replace(tmp, path)
     os.chmod(path, 0o600)
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try: os.fsync(directory)
+    finally: os.close(directory)
 
 def load_json(path, default=None):
     try:
         return json.loads(Path(path).read_text())
     except FileNotFoundError:
         return {} if default is None else default
+
+class AuthenticationRequired(RuntimeError):
+    pass
+
+class StorageUnavailable(RuntimeError):
+    pass
+
+class InsufficientSpace(RuntimeError):
+    pass
 
 class Paused(Exception):
     pass
@@ -91,7 +103,7 @@ class Drive:
             with urllib.request.urlopen(urllib.request.Request('https://oauth2.googleapis.com/token', data=body), timeout=45) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
-            raise RuntimeError('Google recusou a autorização. Reconecte a conta e confira o aplicativo OAuth.') from e
+            raise AuthenticationRequired('A autorização do Google expirou ou foi recusada. Reconecte sua conta.') from e
 
     def token(self):
         with self.lock:

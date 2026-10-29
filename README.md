@@ -16,6 +16,9 @@ Cliente independente com painel local, downloads paralelos, retomada de transfer
 - Catálogo inicial paginado e atualizações pelo histórico incremental da API do Drive.
 - Erros persistentes, retentativas e lixeira local para arquivos removidos/substituídos.
 - Métricas passivas de RAID10, discos, rede e etapas do download, sem executar benchmark.
+- Renomeações e movimentações por ID do Drive, reaproveitando conteúdo local validado por checksum.
+- Recuperação de manifesto, reconhecimento de arquivos existentes e auditoria opcional com limite de leitura.
+- Prévia de limpeza de lixeira/parciais e alertas de autenticação, espaço, volume e RAID degradado.
 - OAuth desktop com PKCE e acesso somente de leitura na nuvem.
 
 ## Requisitos
@@ -76,6 +79,7 @@ Em apps externos no modo Testing, o Google pode expirar a autorização offline 
 - **Desempenho:** gráficos dos discos e da conexão, filas, latência e possíveis gargalos.
 - **Pendências:** motivo das falhas, tentativas e ação para tentar novamente.
 - **Atividade:** últimos eventos da sessão.
+- **Manutenção:** recuperação, auditoria e limpeza revisada, com a sincronização pausada.
 - **Configurações:** conta, pasta de origem e intervalo de atualização.
 
 O botão de lua/sol na barra superior troca o tema. A preferência é salva somente no navegador; não altera sua conta ou seus arquivos.
@@ -117,7 +121,13 @@ Mantenha o terminal aberto e abra http://127.0.0.1:8765 nesse computador. O call
 
 O estado padrão é `~/.local/share/drive-espelho`, com diretório 0700 e JSONs 0600. Inclui configuração local, conta, tokens, catálogo, manifesto e erros. Esses dados não fazem parte do repositório e são ignorados pelo Git.
 
-Preserve uma cópia privada do estado ao reinstalar o sistema. O manifesto identifica os arquivos concluídos. Não apague o estado para forçar troca de conta/origem sobre a mesma réplica.
+Em **Manutenção**, pause a sincronização e espere os downloads terminarem. Exporte o backup de recuperação e guarde-o fora do computador antes de reinstalar. Ele contém manifesto, identificação da conta, caminhos e UUID do volume; **não contém tokens nem segredo OAuth**, mas é privado por conter nomes de arquivos.
+
+A cada ciclo concluído, o aplicativo também grava um checkpoint privado em `.drive-espelho/recovery.json` dentro do destino. Depois de reinstalar, configure o mesmo volume e destino, pause o aplicativo e importe o backup ou restaure o checkpoint pelo painel. A importação exige manifesto vazio e o mesmo UUID; a conta da réplica fica vinculada à recuperação. Importe novamente seu JSON OAuth e reconecte a mesma conta, se necessário.
+
+Sem backup, **Reconhecer arquivos existentes** consulta o Drive e lê os arquivos locais para adotar apenas os que coincidem em tamanho e MD5 remoto. Não baixa nem sobrescreve conteúdo. Formatos sem checksum remoto são ignorados. Essa recuperação completa pode demorar; use o limite de leitura e o cancelamento.
+
+Não apague o estado para forçar troca de conta/origem sobre a mesma réplica.
 
 O destino usa arquivos legíveis por outros usuários locais para facilitar o uso com servidores de mídia. Se essa não for sua intenção, revise as permissões no seu ambiente.
 
@@ -126,17 +136,23 @@ O destino usa arquivos legíveis por outros usuários locais para facilitar o us
 - Uma direção: **Drive → disco**. Não envia alterações nem exclui arquivos no Google.
 - A origem fica fixa depois de haver arquivos registrados. A troca de conta também é bloqueada para preservar a réplica.
 - Exclusões locais são adiadas até a listagem completa e os downloads do ciclo concluírem. São movimentações para `.drive-espelho/lixeira`, sem descarte permanente automático.
-- A lixeira e parciais de versões antigas ocupam espaço e precisam de revisão/limpeza manual.
+- A lixeira e parciais de versões antigas ocupam espaço. Em Manutenção, gere a prévia, revise os arquivos, escolha a categoria e digite a confirmação de exclusão permanente. Arquivos alterados depois da prévia são preservados; não há limpeza automática.
 - Conteúdo local modificado não é enviado ao Drive. Ao substituir, a cópia anterior é preservada na lixeira. Não use a réplica como origem de edição bidirecional.
 - O aplicativo não remove arquivos locais desconhecidos fora do manifesto. Use uma pasta dedicada.
 - Docs → DOCX, Sheets → XLSX, Slides → PPTX e Drawings → PDF. São exportações; outros formatos nativos e atalhos viram arquivos `.url`.
 - Exportações têm limites da API e não oferecem a mesma retomada por Range dos binários. Respostas com tamanho anunciado incompleto são rejeitadas.
 - Não inclui automaticamente “Compartilhados comigo”, histórico de versões, permissões, comentários, lixeira remota ou unidades compartilhadas.
 - Nomes incompatíveis e duplicados são adaptados. Uma réplica integral, idêntica ao serviço Google Drive não é possível.
-- Renomear/mover pode provocar download novamente nesta versão. O manifesto completo ainda é gravado após cada conclusão; acervos muito grandes podem gerar custo extra.
+- Renomear/mover no Drive conserva o ID. Com tamanho e checksum iguais e metadados locais intactos, o arquivo é movido no disco sem novo download. Um diário permite retomar movimentações interrompidas. Conteúdo alterado ou sem evidência suficiente segue a atualização conservadora. O manifesto completo ainda é gravado após cada conclusão; acervos muito grandes podem gerar custo extra.
 - O hash é conferido ao terminar downloads. Arquivos já concluídos não são relidos inteiros em cada ciclo: são comparados metadados, tamanho e data locais.
 - Os contadores incluem parciais. 100% dos bytes recebidos pode aparecer antes da validação final. Documentos sem tamanho conhecido ficam fora do total em bytes.
 - A pausa acontece entre operações; chamadas de rede podem demorar até o timeout. A fila aguarda os workers drenarem antes de outro ciclo.
+
+## Auditoria e alertas
+
+A auditoria é opcional: lê o conteúdo e compara com o MD5 registrado, sem corrigir, apagar ou baixar arquivos. Exige sincronização pausada, usa por padrão 8 MiB/s e aceita `0` para leitura ilimitada. Pode ser cancelada; o relatório mostra contagens e até 100 ocorrências. Não é executada automaticamente a cada ciclo.
+
+O painel alerta sobre autorização expirada, volume indisponível, pouco espaço, RAID degradado e falhas da auditoria/checkpoint. São verificações locais; não substituem monitoramento SMART ou backup independente. A manutenção bloqueia sincronização e alterações de configuração enquanto está ativa.
 
 ## Interpretar o diagnóstico
 
@@ -151,6 +167,7 @@ python -m unittest -v
 node --check static/ui.js
 node --check static/diagnostics.js
 node --check static/theme.js
+node --check static/maintenance.js
 bash -n iniciar.sh instalar-servico.sh
 ```
 

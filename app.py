@@ -46,7 +46,7 @@ class Handler(BaseHTTPRequestHandler):
         if path.path == '/oauth/callback':
             exchanged = False
             try:
-                if not engine.config['paused']:
+                if not engine.config['paused'] or engine.maintenance.snapshot()['state'] == 'running':
                     raise ValueError('Pause a sincronização antes de conectar a conta.')
                 query = urllib.parse.parse_qs(path.query)
                 if 'error' in query:
@@ -60,6 +60,7 @@ class Handler(BaseHTTPRequestHandler):
                         (engine.state / 'tokens.json').unlink(missing_ok=True)
                         raise ValueError('Esta réplica pertence a outra conta. A troca foi bloqueada para preservar os arquivos.')
                     save_json(engine.state / 'account.json', account)
+                engine.clear_auth_error()
                 engine.event('Conta Google conectada com permissão somente de leitura.')
                 self.send_response(303); self.send_header('Location', '/'); self.end_headers()
                 return
@@ -72,6 +73,7 @@ class Handler(BaseHTTPRequestHandler):
         assets = {'/': ('index.html', 'text/html; charset=utf-8'),
                   '/ui.js': ('ui.js', 'text/javascript; charset=utf-8'),
                   '/theme.js': ('theme.js', 'text/javascript; charset=utf-8'),
+                  '/maintenance.js': ('maintenance.js', 'text/javascript; charset=utf-8'),
                   '/diagnostics.js': ('diagnostics.js', 'text/javascript; charset=utf-8'),
                   '/style.css': ('style.css', 'text/css; charset=utf-8')}
         if path.path in assets:
@@ -86,10 +88,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(403, {'error': 'Requisição não autorizada.'})
         try:
             size = int(self.headers.get('Content-Length', 0))
-            if not 0 < size <= 65536:
+            maximum = 32*1024*1024 if self.path == '/api/recovery-import' else 65536
+            if not 0 < size <= maximum:
                 raise ValueError('Requisição inválida ou muito grande.')
             body = json.loads(self.rfile.read(size))
             e = self.server.engine
+            if self.path in ('/api/client','/api/connect','/api/settings') and e.maintenance.snapshot()['state'] == 'running':
+                raise ValueError('Aguarde ou cancele a manutenção antes de alterar a conta ou configuração.')
             if self.path == '/api/client':
                 if not e.config['paused'] or e.snapshot()['phase'] not in ('pausado', 'erro', 'aguardando'):
                     raise ValueError('Pause e espere o download atual parar primeiro.')
@@ -114,13 +119,29 @@ class Handler(BaseHTTPRequestHandler):
                 e.settings(root, body.get('interval', 300), body.get('workers'))
             elif self.path == '/api/start':
                 with self.server.auth_lock:
-                    if not (e.state / 'tokens.json').exists() or not (e.state / 'account.json').exists():
+                    if e.auth_error or not (e.state / 'tokens.json').exists() or not (e.state / 'account.json').exists():
                         raise ValueError('Conecte sua conta Google primeiro.')
                     e.pause(False)
             elif self.path == '/api/retry-errors':
-                if not (e.state / 'tokens.json').exists() or not (e.state / 'account.json').exists():
+                if e.auth_error or not (e.state / 'tokens.json').exists() or not (e.state / 'account.json').exists():
                     raise ValueError('Conecte sua conta Google primeiro.')
                 e.retry_errors()
+            elif self.path == '/api/recovery-export':
+                return self.reply(200, e.maintenance.export())
+            elif self.path == '/api/recovery-checkpoint-import':
+                e.maintenance.restore_checkpoint()
+            elif self.path == '/api/recovery-import':
+                e.maintenance.restore(body)
+            elif self.path == '/api/maintenance-start':
+                if body.get('kind') == 'rebuild' and (e.auth_error or not (e.state/'tokens.json').exists()):
+                    raise ValueError('Conecte sua conta Google antes de reconstruir o índice.')
+                e.maintenance.start(body.get('kind'), body.get('rate_mib',8))
+            elif self.path == '/api/maintenance-cancel':
+                e.maintenance.cancelled.set()
+            elif self.path == '/api/cleanup-preview':
+                return self.reply(200, e.maintenance.cleanup_preview())
+            elif self.path == '/api/cleanup-confirm':
+                return self.reply(200, e.maintenance.cleanup(body.get('token'),body.get('kind'),body.get('confirmation')))
             elif self.path == '/api/diagnostics-settings':
                 e.set_internet_speed(body.get('internet_mbps'))
             elif self.path == '/api/workers':
