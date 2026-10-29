@@ -9,7 +9,7 @@ repository="$(gh api user --jq .login)/HitechDrive"
 gh repo edit "$repository" \
   --description 'Google Drive → Linux. Visual dashboard, resumable downloads, bandwidth control and local recovery.' \
   --add-topic google-drive --add-topic linux --add-topic python --add-topic self-hosted \
-  --add-topic sync --add-topic backup --add-topic jellyfin --enable-issues
+  --add-topic sync --add-topic backup --remove-topic jellyfin --enable-issues
 release_tag='v0.1.0-alpha.1'
 # A failed lookup is not assumed to mean absence: list must succeed first.
 existing="$(gh release list --repo "$repository" --limit 100 --json tagName --jq '.[].tagName')"
